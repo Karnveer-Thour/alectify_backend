@@ -1,0 +1,17 @@
+export enum CommentsMessages {
+  CREATED = 'has created {type}',
+  DELETED = 'has deleted {type}',
+  UPDATED = 'has updated the {type}',
+  DOCUMENT_UPLOAD = ' has uploaded file in {folder}',
+  PROCEDURE_STEP_UPDATED = 'has updated a Procedure step, Procedure Step {stepNo}',
+  STATUS_CHANGED = 'has changed the {type} status to {status}',
+  STATUS_REOPEN = 'has changed the state from {oldStatus} to {currentStatus}',
+  MESSAGE = 'messaged: {message}',
+  ASSIGNEE_ADDED = 'added you as an assignee in the {type}',
+  ASSIGNEE_REMOVED = 'removed you from the assignees of the {type}',
+  TEAM_MEMBER_ADDED = 'added you as an team member in the {type}',
+  TEAM_MEMBER_REMOVED = 'removed you from the team members of the {type}',
+  APPROVER_ADDED = 'added you as an approver in the {type}',
+  APPROVER_REMOVED = 'removed you from the approvers of the {type}',
+  DRWAN_SPARE_PARTS = 'drawn {qty} {sparePartName} spart parts',
+}

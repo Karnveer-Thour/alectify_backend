@@ -1,0 +1,14 @@
+pipelines:
+  branches:
+    develop:
+      - parallel:
+          - step:
+              name: Step 1
+              script:
+                - echo "Ready for the deployment now";
+          - step:
+              deployment: staging
+              trigger: manual
+              name: Building & deploying to stage
+              script:
+                - ssh ubuntu@3.211.168.8 'cd /home/ubuntu/operations-nestjs-backend/ && git pull && source ~/.nvm/nvm.sh && source ~/.profile && npm i && npm run migration:run && pm2 restart all'
