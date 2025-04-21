@@ -443,7 +443,7 @@ export class IncidentReportsService {
   }
 
   //new endpoint to send email
-  async sendEmail(
+  async downloadReportpdf(
     userId: string,
     id: string,
   ) {

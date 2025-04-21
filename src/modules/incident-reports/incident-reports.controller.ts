@@ -161,13 +161,13 @@ export class IncidentReportsController {
 
 
   //Newly added
-  @Post('send-email/:incidentReportId')
+  @Post('downloadIncidentreport/:incidentReportId')
   async sendIncidentReportEmail(
     @Req() req,
     @Param('incidentReportId',ParseUUIDPipe) incidentReportId: string,
     @Res() res: Response,
   ){
-    const pdfBuffer:any= await this.incidentReportsService.sendEmail(req.user,incidentReportId);
+    const pdfBuffer:any= await this.incidentReportsService.downloadReportpdf(req.user,incidentReportId);
     res.set({
         'Content-Type': 'application/pdf',
         'Content-Disposition': 'attachment; filename="report.pdf"',
