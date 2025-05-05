@@ -55,7 +55,6 @@ export class ApplicationVersionsController {
   @ApiOkResponse({
     type: CreateApplicationVersionResponseDto,
   })
-  @BypassAuth()
   @Get(':applicationType')
   findOneByApplicationType(
     @Req() req,

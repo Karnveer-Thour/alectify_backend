@@ -1379,8 +1379,8 @@ export class SparePartsService {
   ): Promise<SparePartsMonthlyCostResponse> {
     const monthlyTotals: MonthlyTotalPrice[] = [];
     let projectIds = [projectId];
-    const currentYear = moment().startOf('year');
-    const year = 2024;
+    // const currentYear = moment().startOf('year');
+    // const year = currentYear.year();
 
     if (!projectId) {
       const data = await this.projectsService.findMasterProjectsByUserId(
@@ -1395,19 +1395,18 @@ export class SparePartsService {
 
     for (let month = 1; month <= 12; month++) {
       const startDate = moment()
-        .year(year)
+        // .year(year)
         .month(month - 1)
         .startOf('month')
         .format('YYYY-MM-DD');
       const endDate = moment()
-        .year(year)
+        // .year(year)
         .month(month - 1)
         .endOf('month')
         .format('YYYY-MM-DD');
       const monthName = moment()
         .month(month - 1)
         .format('MMM, YY');
-
       const query = this.projectSparePartRepository
         .createQueryBuilder('psp')
         .leftJoin('psp.project', 'project')

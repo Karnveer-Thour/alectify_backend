@@ -17,7 +17,6 @@ export class AppController {
   }
 
   @Get('html')
-  @BypassAuth()
   root(@Res() res: Response) {
     res.render('index', {
       layout: 'index',

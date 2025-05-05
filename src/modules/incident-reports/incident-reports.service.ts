@@ -443,13 +443,9 @@ export class IncidentReportsService {
   }
 
   //new endpoint to send email
-  async downloadReportpdf(
-    userId: string,
-    id: string,
-  ) {
+  async downloadReportpdf(userId: string, id: string) {
     try {
       const authUser = await this.usersService.findOneById(userId);
-      
 
       const incidentReport = await this.incidentReportsRepository.findOne({
         where: { id },
@@ -458,17 +454,16 @@ export class IncidentReportsService {
       if (!incidentReport) {
         throw new NotFoundException('Incident Report does not exist');
       }
-      
 
       const project = incidentReport.project;
       let projectTimezone = null;
       let projectTimezoneShortForm = null;
-  
+
       if (project.latitude && project.longitude) {
         projectTimezone = getTimeZone(project.latitude, project.longitude);
         projectTimezoneShortForm = getTimeZoneShortForm(projectTimezone);
       }
-      
+
       const comments: any = await this.incidentReportCommentsRepository.find({
         where: { incidentReport: { id: incidentReport.id } },
         relations: ['createdBy'],
@@ -483,10 +478,10 @@ export class IncidentReportsService {
           ...(incidentReport?.assets?.map(({ asset }) => asset.name) || []),
           ...(incidentReport?.areas?.map(({ area }) => area.name) || []),
         ].join(', ') || 'None';
-  
+
       let incidentReportCommentHtml = `<h3 style="color: #0954f1">Incident Summary</h3>
       <span><strong>Incident Title: </strong> ${incidentReport.title}</span><br>`;
-  
+
       if (incidentReport.incidentNo || incidentReport.incidentDate) {
         incidentReportCommentHtml += `<span>`;
         if (incidentReport.incidentNo) {
@@ -497,11 +492,13 @@ export class IncidentReportsService {
             incidentReport.incidentDate,
             false,
             projectTimezone,
-          )} ${projectTimezoneShortForm ? `(${projectTimezoneShortForm})` : ''}`;
+          )} ${
+            projectTimezoneShortForm ? `(${projectTimezoneShortForm})` : ''
+          }`;
         }
         incidentReportCommentHtml += `</span><br>`;
       }
-  
+
       incidentReportCommentHtml += `<span><strong>Incident Type: </strong> ${incidentReport.type}</span><br>`;
       if (incidentReport?.impact?.name) {
         incidentReportCommentHtml += `<span><strong>Incident Impact: </strong> ${incidentReport?.impact?.name}</span><br>`;
@@ -510,20 +507,23 @@ export class IncidentReportsService {
         incidentReportCommentHtml += `<span><strong>Affected Systems: </strong> ${incidentReport?.affectedSystem?.name}</span><br>`;
       }
       incidentReportCommentHtml += `<span><strong>Impacted Assets: </strong> ${impactedAssetsAndAreas}</span><br>`;
-  
+
       if (incidentReport.priority) {
         incidentReportCommentHtml += `<span><strong>Priority: </strong> ${incidentReport.priority}</span><br>`;
       }
-  
+
       incidentReportCommentHtml += `<span><strong>Created by/at: </strong> ${
         incidentReport.createdBy.first_name
-      } ${incidentReport.createdBy.last_name} created at ${displayDateWithTimeZoneWithOutSecond(
+      } ${
+        incidentReport.createdBy.last_name
+      } created at ${displayDateWithTimeZoneWithOutSecond(
         incidentReport.createdAt,
         false,
         projectTimezone,
-      )} ${projectTimezoneShortForm ? `(${projectTimezoneShortForm})` : ''}</span><br>`;
-      
-  
+      )} ${
+        projectTimezoneShortForm ? `(${projectTimezoneShortForm})` : ''
+      }</span><br>`;
+
       if (comments.length) {
         incidentReportCommentHtml += `<br><h3>---------------------------------------------------------------------------------------</h3>
           <h3 style="color: #0954f1">Incident Timeline</h3>`;
@@ -535,9 +535,13 @@ export class IncidentReportsService {
             element.createdAt,
             false,
             projectTimezone,
-          )} ${projectTimezoneShortForm ? `(${projectTimezoneShortForm})` : ''}</h3>
-          <span><strong>by: </strong> ${element.createdBy?.first_name} ${element.createdBy?.last_name}</span><br>`;
-  
+          )} ${
+            projectTimezoneShortForm ? `(${projectTimezoneShortForm})` : ''
+          }</h3>
+          <span><strong>by: </strong> ${element.createdBy?.first_name} ${
+            element.createdBy?.last_name
+          }</span><br>`;
+
           if (
             !element.isSystemGenerated &&
             element.description != '.' &&
@@ -548,8 +552,12 @@ export class IncidentReportsService {
             }</span><br>`;
           } else {
             incidentReportCommentHtml += `<span><strong>Next Update: </strong> </span><br>
-            <span><strong>System State: </strong> ${element.systemState ?? '-'}</span><br>
-            <span><strong>Actions: </strong> ${element.actions ?? '-'}</span><br>`;
+            <span><strong>System State: </strong> ${
+              element.systemState ?? '-'
+            }</span><br>
+            <span><strong>Actions: </strong> ${
+              element.actions ?? '-'
+            }</span><br>`;
             if (element.description === '.' || element.description === null) {
               incidentReportCommentHtml += `<span><strong>Description: </strong> ${
                 element.description ?? '-'
@@ -558,18 +566,19 @@ export class IncidentReportsService {
           }
         }
       }
-  
-  
+
       const browser = await puppeteer.launch(); // Launch headless Chromium
       const page = await browser.newPage();
-    
+
       // Example: Load HTML from file
-      await page.setContent(incidentReportCommentHtml, { waitUntil: 'domcontentloaded' });
-    
+      await page.setContent(incidentReportCommentHtml, {
+        waitUntil: 'domcontentloaded',
+      });
+
       // Optional: Wait for fonts/images/etc.
       await page.emulateMediaType('screen');
-    
-     const pdfUint8Array= await page.pdf({
+
+      const pdfUint8Array = await page.pdf({
         format: 'A4',
         printBackground: true, // Include background styles
       });
@@ -581,9 +590,7 @@ export class IncidentReportsService {
     } catch (error) {
       throw error;
     }
-  
-}
-  
+  }
 
   async update(
     user: User,

@@ -1,5 +1,5 @@
-import
- {BadRequestException,
+import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -8,7 +8,8 @@ import
   Query,
   Req,
   UploadedFiles,
-  UseInterceptors,} from '@nestjs/common';
+  UseInterceptors,
+} from '@nestjs/common';
 import crypto from 'crypto';
 import { IncidentReportCommentsService } from './incident-report-comments.service';
 import { CreateIncidentReportCommentDto } from './dto/create-incident-report-comment.dto';
@@ -31,7 +32,6 @@ export class IncidentReportCommentsController {
     private readonly incidentReportCommentsService: IncidentReportCommentsService,
   ) {}
 
-  
   @Post('email-webhook')
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'attachments', maxCount: 100 }]),
@@ -91,7 +91,6 @@ export class IncidentReportCommentsController {
       },
     );
   }
-
 
   @Post(':incidentReportId')
   @UseInterceptors(AnyFilesInterceptor())
