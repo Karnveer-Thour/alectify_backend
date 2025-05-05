@@ -1379,8 +1379,6 @@ export class SparePartsService {
   ): Promise<SparePartsMonthlyCostResponse> {
     const monthlyTotals: MonthlyTotalPrice[] = [];
     let projectIds = [projectId];
-    // const currentYear = moment().startOf('year');
-    // const year = currentYear.year();
 
     if (!projectId) {
       const data = await this.projectsService.findMasterProjectsByUserId(
@@ -1395,12 +1393,10 @@ export class SparePartsService {
 
     for (let month = 1; month <= 12; month++) {
       const startDate = moment()
-        // .year(year)
         .month(month - 1)
         .startOf('month')
         .format('YYYY-MM-DD');
       const endDate = moment()
-        // .year(year)
         .month(month - 1)
         .endOf('month')
         .format('YYYY-MM-DD');
@@ -1428,11 +1424,17 @@ export class SparePartsService {
         .setParameter('borrow', QuantityTypes.BORROW)
         .setParameter('restock', QuantityTypes.RESTOCK);
 
-      const result = await query.getRawOne();
+      const result = await query.getRawMany();
       monthlyTotals.push({
         month: monthName,
-        drawTotal: parseFloat(result?.drawTotal || 0),
-        restockTotal: parseFloat(result?.restockTotal || 0),
+        drawTotal: result.reduce(
+          (sum, result) => (sum += Number(result.drawTotal) ?? 0),
+          0,
+        ),
+        restockTotal: result.reduce(
+          (sum, result) => (sum += Number(result.restockTotal) ?? 0),
+          0,
+        ),
       });
     }
 
