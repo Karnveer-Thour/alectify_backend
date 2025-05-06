@@ -414,12 +414,14 @@ export class SparePartsController {
   getSparePartsStats(
     @Req() req,
     @Query()
-    { projectId = null }: GetSparePartStatsDto,
+    { projectId = null,startDate,endDate }: GetSparePartStatsDto,
   ): Promise<SparePartDashboardStatsResponseDto> {
     return this.sparePartsService.getSparePartStats(
       projectId,
       req.headers.authorization,
       req.user,
+      startDate,
+      endDate
     );
   }
 

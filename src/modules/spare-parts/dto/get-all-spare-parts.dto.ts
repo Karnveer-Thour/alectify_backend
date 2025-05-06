@@ -122,4 +122,18 @@ export class GetSparePartStatsDto {
   @IsOptional()
   @IsString()
   projectId: string;
+  
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  startDate: string;
+  
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  endDate: string;
 }

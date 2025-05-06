@@ -1147,6 +1147,8 @@ export class SparePartsService {
     projectId: string,
     token: string,
     user: User,
+    startDate:string,
+    endDate:string
   ): Promise<SparePartDashboardStatsResponseDto> {
     let projectIds = [projectId];
     const currentYear = moment().startOf('year');
@@ -1172,60 +1174,13 @@ export class SparePartsService {
         };
       }
     }
-    const [inventoryCounts, totalCost, currentYearCost] = await Promise.all([
+    const [inventoryCounts, totalCost, currentYearCost,monthlyTotals] = await Promise.all([
       this.getInventoryCounts(projectIds),
       this.getCurrentYearOrTotalCost(projectIds),
       this.getCurrentYearOrTotalCost(projectIds, dateToUTC(yearStart)),
+      this.getCurrentYearTotalStock(projectIds,startDate,endDate)
     ]);
-
-    const monthlyTotals=[];
-
-    for (let month = 1; month <= 12; month++) {
-      const startDate = moment()
-        .month(month - 1)
-        .startOf('month')
-        .format('YYYY-MM-DD');
-      const endDate = moment()
-        .month(month - 1)
-        .endOf('month')
-        .format('YYYY-MM-DD');
-      const monthName = moment()
-        .month(month - 1)
-        .format('MMM, YY');
-      const query = this.projectSparePartRepository
-        .createQueryBuilder('psp')
-        .leftJoin('psp.project', 'project')
-        .where('project.id IN (:...projectIds)', { projectIds })
-        .leftJoin('psp.manageOrderHistories', 'manageOrderHistories')
-        .andWhere(
-          'DATE(manageOrderHistories.createdAt) BETWEEN :startDate AND :endDate',
-          { startDate, endDate },
-        )
-        .groupBy('psp.id')
-        .addSelect(
-          'SUM(CASE WHEN manageOrderHistories.quantityType = :borrow THEN manageOrderHistories.quantity ELSE 0 END * COALESCE(manageOrderHistories.price, 0))',
-          'drawTotal',
-        )
-        .addSelect(
-          'SUM(CASE WHEN manageOrderHistories.quantityType = :restock THEN manageOrderHistories.quantity ELSE 0 END * COALESCE(manageOrderHistories.price, 0))',
-          'restockTotal',
-        )
-        .setParameter('borrow', QuantityTypes.BORROW)
-        .setParameter('restock', QuantityTypes.RESTOCK);
-
-      const result = await query.getRawMany();
-      monthlyTotals.push({
-        month: monthName,
-        drawTotal: result.reduce(
-          (sum, result) => (sum += Number(result.drawTotal) ?? 0),
-          0,
-        ),
-        restockTotal: result.reduce(
-          (sum, result) => (sum += Number(result.restockTotal) ?? 0),
-          0,
-        ),
-      });
-    }
+   
 
     return {
       data: {
@@ -1245,6 +1200,37 @@ export class SparePartsService {
       message: 'Get spare parts dashboard stats successfully.',
     };
   }
+
+
+  async getCurrentYearTotalStock(projectIds: string[],startDate,endDate) {
+    const currentYear=moment().year();
+    if(!startDate)startDate=moment().year(currentYear).startOf('year').toDate();
+    if(!endDate)endDate=moment().year(currentYear).endOf('year').toDate();
+    
+    const query = this.projectSparePartRepository
+        .createQueryBuilder('psp')
+        .leftJoin('psp.project', 'project')
+        .where('project.id IN (:...projectIds)', { projectIds })
+        .leftJoin('psp.manageOrderHistories', 'manageOrderHistories')
+        .andWhere(
+          'DATE(manageOrderHistories.createdAt) BETWEEN :startDate AND :endDate',
+          { startDate,endDate},
+        )
+        .groupBy('psp.id')
+        .addSelect(
+          'SUM(CASE WHEN manageOrderHistories.quantityType = :borrow THEN manageOrderHistories.quantity ELSE 0 END * COALESCE(manageOrderHistories.price, 0))',
+          'drawTotal',
+        )
+        .addSelect(
+          'SUM(CASE WHEN manageOrderHistories.quantityType = :restock THEN manageOrderHistories.quantity ELSE 0 END * COALESCE(manageOrderHistories.price, 0))',
+          'restockTotal',
+        )
+        .setParameter('borrow', QuantityTypes.BORROW)
+        .setParameter('restock', QuantityTypes.RESTOCK);
+
+      return await query.getRawMany();
+  }
+
 
   async getCurrentYearOrTotalCost(projectIds: string[], yearStart?: Date) {
     // const qtyQuery = this.projectSparePartRepository
