@@ -22,6 +22,14 @@ export class SparePartDashboardStatsDto {
   @ApiProperty()
   @IsNumber()
   lowInventoryCount: number;
+  
+  @ApiProperty()
+  @IsNumber()
+  drawTotal?: number;
+  
+  @ApiProperty()
+  @IsNumber()
+  reStockTotal?: number;
 }
 
 export class SparePartDashboardStatsResponseDto extends BaseResponseDto {

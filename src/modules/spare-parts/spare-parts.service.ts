@@ -1165,6 +1165,8 @@ export class SparePartsService {
             totalCount: 0,
             outOfStockCount: 0,
             lowInventoryCount: 0,
+            drawTotal:0,
+            reStockTotal:0
           },
           message: 'Get spare parts dashboard stats successfully.',
         };
@@ -1176,10 +1178,67 @@ export class SparePartsService {
       this.getCurrentYearOrTotalCost(projectIds, dateToUTC(yearStart)),
     ]);
 
+    const monthlyTotals=[];
+
+    for (let month = 1; month <= 12; month++) {
+      const startDate = moment()
+        .month(month - 1)
+        .startOf('month')
+        .format('YYYY-MM-DD');
+      const endDate = moment()
+        .month(month - 1)
+        .endOf('month')
+        .format('YYYY-MM-DD');
+      const monthName = moment()
+        .month(month - 1)
+        .format('MMM, YY');
+      const query = this.projectSparePartRepository
+        .createQueryBuilder('psp')
+        .leftJoin('psp.project', 'project')
+        .where('project.id IN (:...projectIds)', { projectIds })
+        .leftJoin('psp.manageOrderHistories', 'manageOrderHistories')
+        .andWhere(
+          'DATE(manageOrderHistories.createdAt) BETWEEN :startDate AND :endDate',
+          { startDate, endDate },
+        )
+        .groupBy('psp.id')
+        .addSelect(
+          'SUM(CASE WHEN manageOrderHistories.quantityType = :borrow THEN manageOrderHistories.quantity ELSE 0 END * COALESCE(manageOrderHistories.price, 0))',
+          'drawTotal',
+        )
+        .addSelect(
+          'SUM(CASE WHEN manageOrderHistories.quantityType = :restock THEN manageOrderHistories.quantity ELSE 0 END * COALESCE(manageOrderHistories.price, 0))',
+          'restockTotal',
+        )
+        .setParameter('borrow', QuantityTypes.BORROW)
+        .setParameter('restock', QuantityTypes.RESTOCK);
+
+      const result = await query.getRawMany();
+      monthlyTotals.push({
+        month: monthName,
+        drawTotal: result.reduce(
+          (sum, result) => (sum += Number(result.drawTotal) ?? 0),
+          0,
+        ),
+        restockTotal: result.reduce(
+          (sum, result) => (sum += Number(result.restockTotal) ?? 0),
+          0,
+        ),
+      });
+    }
+
     return {
       data: {
         totalCost,
         currentYearCost,
+        drawTotal:monthlyTotals.reduce(
+          (sum, result) => (sum += Number(result.drawTotal) ?? 0),
+          0,
+        ),
+        reStockTotal: monthlyTotals.reduce(
+          (sum, result) => (sum += Number(result.restockTotal) ?? 0),
+          0,
+        ),
         ...inventoryCounts,
         // result,
       },
@@ -1414,11 +1473,11 @@ export class SparePartsService {
         )
         .groupBy('psp.id')
         .addSelect(
-          'SUM(CASE WHEN manageOrderHistories.quantityType = :borrow THEN manageOrderHistories.quantity ELSE 0 END * COALESCE(psp.price, 0))',
+          'SUM(CASE WHEN manageOrderHistories.quantityType = :borrow THEN manageOrderHistories.quantity ELSE 0 END * COALESCE(manageOrderHistories.price, 0))',
           'drawTotal',
         )
         .addSelect(
-          'SUM(CASE WHEN manageOrderHistories.quantityType = :restock THEN manageOrderHistories.quantity ELSE 0 END * COALESCE(psp.price, 0))',
+          'SUM(CASE WHEN manageOrderHistories.quantityType = :restock THEN manageOrderHistories.quantity ELSE 0 END * COALESCE(manageOrderHistories.price, 0))',
           'restockTotal',
         )
         .setParameter('borrow', QuantityTypes.BORROW)
