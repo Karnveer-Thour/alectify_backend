@@ -48,6 +48,7 @@ import { createObjectCsvStringifier, createObjectCsvWriter } from 'csv-writer';
 import { Response } from 'express';
 import { FilesUploadService } from 'modules/files-upload/files-upload.service';
 import { GetAdvisorySummariesResponseDto } from './dto/get-advisory-summaries-response.dto';
+import { error } from 'console';
 
 interface MonthlyTotalPrice {
   month: string;
@@ -1143,6 +1144,10 @@ export class SparePartsService {
     }
   }
 
+  isDate(input: any): boolean {
+    return input instanceof Date && !isNaN(input.getTime());
+  }
+
   async getSparePartStats(
     projectId: string,
     token: string,
@@ -1151,34 +1156,24 @@ export class SparePartsService {
     endDate:any
   ): Promise<SparePartDashboardStatsResponseDto> {
     let projectIds = [projectId];
-    const data= {
-      totalCost: 0,
-      currentYearCost: 0,
-      totalCount: 0,
-      outOfStockCount: 0,
-      lowInventoryCount: 0,
-      drawTotal:0,
-      reStockTotal:0
-    }
     
     if((startDate || endDate) && !(startDate && endDate)){
       if(!startDate){
-        return {
-          data,
-          message: 'start Date also required',
-        }
+        throw new Error("Start Date required");
       }else if(!endDate){
-        return {
-          data,
-          message: 'end Date also required',
-        }
+       throw new Error("End Date required");
       }
     }
 
     if(startDate>endDate){
-      return {
-        data,
-        message: "start date cannot be greater than end date"
+      throw new Error("Start date cannot be greater than End date");
+    }
+
+    if(startDate && endDate){
+      if(!this.isDate(new Date(startDate))){
+        throw new Error("Enter valid Start date");
+      }else if(!this.isDate(new Date(endDate))){
+        throw new Error("Enter valid End date");
       }
     }
 
