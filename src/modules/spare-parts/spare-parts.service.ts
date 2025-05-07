@@ -1147,12 +1147,40 @@ export class SparePartsService {
     projectId: string,
     token: string,
     user: User,
-    startDate:string,
-    endDate:string
+    startDate:any,
+    endDate:any
   ): Promise<SparePartDashboardStatsResponseDto> {
     let projectIds = [projectId];
-    const currentYear = moment().startOf('year');
-    const yearStart = currentYear.format('YYYY-MM-DD');
+    const data= {
+      totalCost: 0,
+      currentYearCost: 0,
+      totalCount: 0,
+      outOfStockCount: 0,
+      lowInventoryCount: 0,
+      drawTotal:0,
+      reStockTotal:0
+    }
+    
+    if((startDate || endDate) && !(startDate && endDate)){
+      if(!startDate){
+        return {
+          data,
+          message: 'start Date also required',
+        }
+      }else if(!endDate){
+        return {
+          data,
+          message: 'end Date also required',
+        }
+      }
+    }
+
+    if(startDate>endDate){
+      return {
+        data,
+        message: "start date cannot be greater than end date"
+      }
+    }
 
     if (!projectId) {
       const data = await this.projectsService.findMasterProjectsByUserId(
@@ -1174,11 +1202,16 @@ export class SparePartsService {
         };
       }
     }
+
+    const currentYear=moment().year();
+    if(!startDate)startDate=moment().year(currentYear).startOf('year').toDate();
+    if(!endDate)endDate=moment().year(currentYear).endOf('year').toDate();
+
     const [inventoryCounts, totalCost, currentYearCost,monthlyTotals] = await Promise.all([
-      this.getInventoryCounts(projectIds),
+      this.getInventoryCounts(projectIds, dateToUTC(startDate),dateToUTC(endDate)),
       this.getCurrentYearOrTotalCost(projectIds),
-      this.getCurrentYearOrTotalCost(projectIds, dateToUTC(yearStart)),
-      this.getCurrentYearTotalStock(projectIds,startDate,endDate)
+      this.getCurrentYearOrTotalCost(projectIds, dateToUTC(startDate),dateToUTC(endDate)),
+      this.getCurrentYearTotalStock(projectIds,dateToUTC(startDate),dateToUTC(endDate))
     ]);
    
 
@@ -1202,11 +1235,7 @@ export class SparePartsService {
   }
 
 
-  async getCurrentYearTotalStock(projectIds: string[],startDate,endDate) {
-    const currentYear=moment().year();
-    if(!startDate)startDate=moment().year(currentYear).startOf('year').toDate();
-    if(!endDate)endDate=moment().year(currentYear).endOf('year').toDate();
-    
+  async getCurrentYearTotalStock(projectIds: string[],startDate?:Date,endDate?:Date) {
     const query = this.projectSparePartRepository
         .createQueryBuilder('psp')
         .leftJoin('psp.project', 'project')
@@ -1232,7 +1261,7 @@ export class SparePartsService {
   }
 
 
-  async getCurrentYearOrTotalCost(projectIds: string[], yearStart?: Date) {
+  async getCurrentYearOrTotalCost(projectIds: string[], startDate?: Date,endDate?:Date) {
     // const qtyQuery = this.projectSparePartRepository
     //   .createQueryBuilder('psp')
     //   .leftJoinAndSelect('psp.project', 'project')
@@ -1255,13 +1284,14 @@ export class SparePartsService {
         'totalPrice',
       );
 
-    if (yearStart) {
+    if (startDate && endDate) {
       // qtyQuery.andWhere('manageOrderHistories.createdAt >= :startYear', {
       //   startYear: dateToUTC(yearStart),
       // });
-      totalPriceQuery.andWhere('psp.createdAt >= :startYear', {
-        startYear: dateToUTC(yearStart),
-      });
+      totalPriceQuery.andWhere(
+        'DATE(psp.createdAt) BETWEEN :startDate AND :endDate',
+        { startDate,endDate},
+      )
     }
 
     // const { totalBorrowedQuantity } = await qtyQuery.getRawOne();
@@ -1271,11 +1301,15 @@ export class SparePartsService {
     return totalCost;
   }
 
-  async getInventoryCounts(projectIds: string[]) {
+  async getInventoryCounts(projectIds: string[], startDate?: Date,endDate?:Date) {
     const inventoryCounts = await this.projectSparePartRepository
       .createQueryBuilder('psp')
       .leftJoinAndSelect('psp.project', 'project')
       .where('project.id IN (:...projectIds)', { projectIds })
+      .andWhere(
+        'DATE(psp.createdAt) BETWEEN :startDate AND :endDate',
+        { startDate,endDate},
+      )
       .select([
         'COUNT(psp.id) AS totalCount',
         'SUM(CASE WHEN psp.remainingQuantity <= psp.minimumQuantity AND psp.remainingQuantity != 0 THEN 1 ELSE 0 END) AS lowInventoryCount',
