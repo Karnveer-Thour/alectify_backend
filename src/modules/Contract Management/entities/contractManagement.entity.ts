@@ -15,17 +15,19 @@ import {
 
 @Entity('contractManagement')
 @Index([
-  'site',
-  'vendor',
+  'project',
+  'organization',
   'description',
   'contractNumber',
   'contractAmount',
   'comments',
   'startDate',
   'endDate',
-  'autoRenew',
-  'contact',
-  'attachment',
+  'isRecurring',
+  'user',
+  'attachments',
+  'createdAt',
+  'updatedAt'
 ])
 export class contractManagement extends BaseEntity<Document> {
   @ManyToOne(() => Project, (pro) => pro.id, {
@@ -65,8 +67,8 @@ export class contractManagement extends BaseEntity<Document> {
   @IsDateString()
   endDate: Date;
 
-  @Column({ name: 'autoRenew', type: 'bool', default: false })
-  autoRenew: boolean;
+  @Column({ name: 'isRecurring', type: 'bool', default: false })
+  isRecurring: boolean;
 
   @ManyToOne(() => User, (user) => user.id, {
     nullable: false,
