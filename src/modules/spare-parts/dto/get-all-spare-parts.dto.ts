@@ -1,6 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { StatusFilters } from '../models/status-filter.enum';
 
 export class GetAllSparePartsQueryDto {
@@ -122,18 +129,18 @@ export class GetSparePartStatsDto {
   @IsOptional()
   @IsString()
   projectId: string;
-  
+
   @ApiProperty({
     required: false,
   })
   @IsOptional()
-  @IsString()
+  @IsDateString({},{message:"Enter a valid Start date"})
   startDate: string;
-  
+
   @ApiProperty({
     required: false,
   })
   @IsOptional()
-  @IsString()
+  @IsDateString({},{message:"Enter a valid End date"})
   endDate: string;
 }

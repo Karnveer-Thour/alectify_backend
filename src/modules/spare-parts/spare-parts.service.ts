@@ -1152,30 +1152,30 @@ export class SparePartsService {
     projectId: string,
     token: string,
     user: User,
-    startDate:any,
-    endDate:any
+    startDate: any,
+    endDate: any,
   ): Promise<SparePartDashboardStatsResponseDto> {
     let projectIds = [projectId];
-    
-    if((startDate || endDate) && !(startDate && endDate)){
-      if(!startDate){
-        throw new Error("Start Date required");
-      }else if(!endDate){
-       throw new Error("End Date required");
+
+    if ((startDate || endDate) && !(startDate && endDate)) {
+      if (!startDate) {
+        throw new Error('Start Date required');
+      } else if (!endDate) {
+        throw new Error('End Date required');
       }
     }
 
-    if(startDate>endDate){
-      throw new Error("Start date cannot be greater than End date");
+    if (startDate > endDate) {
+      throw new Error('Start date cannot be greater than End date');
     }
 
-    if(startDate && endDate){
-      if(!this.isDate(new Date(startDate))){
-        throw new Error("Enter valid Start date");
-      }else if(!this.isDate(new Date(endDate))){
-        throw new Error("Enter valid End date");
-      }
-    }
+    // if (startDate && endDate) {
+    //   if (!this.isDate(new Date(startDate))) {
+    //     throw new Error('Enter valid Start date');
+    //   } else if (!this.isDate(new Date(endDate))) {
+    //     throw new Error('Enter valid End date');
+    //   }
+    // }
 
     if (!projectId) {
       const data = await this.projectsService.findMasterProjectsByUserId(
@@ -1190,31 +1190,44 @@ export class SparePartsService {
             totalCount: 0,
             outOfStockCount: 0,
             lowInventoryCount: 0,
-            drawTotal:0,
-            reStockTotal:0
+            drawTotal: 0,
+            reStockTotal: 0,
           },
           message: 'Get spare parts dashboard stats successfully.',
         };
       }
     }
 
-    const currentYear=moment().year();
-    if(!startDate)startDate=moment().year(currentYear).startOf('year').toDate();
-    if(!endDate)endDate=moment().year(currentYear).endOf('year').toDate();
+    const currentYear = moment().year();
+    if (!startDate)
+      startDate = moment().year(currentYear).startOf('year').toDate();
+    if (!endDate) endDate = moment().year(currentYear).endOf('year').toDate();
 
-    const [inventoryCounts, totalCost, currentYearCost,monthlyTotals] = await Promise.all([
-      this.getInventoryCounts(projectIds, dateToUTC(startDate),dateToUTC(endDate)),
-      this.getCurrentYearOrTotalCost(projectIds),
-      this.getCurrentYearOrTotalCost(projectIds, dateToUTC(startDate),dateToUTC(endDate)),
-      this.getCurrentYearTotalStock(projectIds,dateToUTC(startDate),dateToUTC(endDate))
-    ]);
-   
+    const [inventoryCounts, totalCost, currentYearCost, monthlyTotals] =
+      await Promise.all([
+        this.getInventoryCounts(
+          projectIds,
+          dateToUTC(startDate),
+          dateToUTC(endDate),
+        ),
+        this.getCurrentYearOrTotalCost(projectIds),
+        this.getCurrentYearOrTotalCost(
+          projectIds,
+          dateToUTC(startDate),
+          dateToUTC(endDate),
+        ),
+        this.getCurrentYearTotalStock(
+          projectIds,
+          dateToUTC(startDate),
+          dateToUTC(endDate),
+        ),
+      ]);
 
     return {
       data: {
         totalCost,
         currentYearCost,
-        drawTotal:monthlyTotals.reduce(
+        drawTotal: monthlyTotals.reduce(
           (sum, result) => (sum += Number(result.drawTotal) ?? 0),
           0,
         ),
@@ -1229,34 +1242,40 @@ export class SparePartsService {
     };
   }
 
-
-  async getCurrentYearTotalStock(projectIds: string[],startDate?:Date,endDate?:Date) {
+  async getCurrentYearTotalStock(
+    projectIds: string[],
+    startDate?: Date,
+    endDate?: Date,
+  ) {
     const query = this.projectSparePartRepository
-        .createQueryBuilder('psp')
-        .leftJoin('psp.project', 'project')
-        .where('project.id IN (:...projectIds)', { projectIds })
-        .leftJoin('psp.manageOrderHistories', 'manageOrderHistories')
-        .andWhere(
-          'DATE(manageOrderHistories.createdAt) BETWEEN :startDate AND :endDate',
-          { startDate,endDate},
-        )
-        .groupBy('psp.id')
-        .addSelect(
-          'SUM(CASE WHEN manageOrderHistories.quantityType = :borrow THEN manageOrderHistories.quantity ELSE 0 END * COALESCE(manageOrderHistories.price, 0))',
-          'drawTotal',
-        )
-        .addSelect(
-          'SUM(CASE WHEN manageOrderHistories.quantityType = :restock THEN manageOrderHistories.quantity ELSE 0 END * COALESCE(manageOrderHistories.price, 0))',
-          'restockTotal',
-        )
-        .setParameter('borrow', QuantityTypes.BORROW)
-        .setParameter('restock', QuantityTypes.RESTOCK);
+      .createQueryBuilder('psp')
+      .leftJoin('psp.project', 'project')
+      .where('project.id IN (:...projectIds)', { projectIds })
+      .leftJoin('psp.manageOrderHistories', 'manageOrderHistories')
+      .andWhere(
+        'DATE(manageOrderHistories.createdAt) BETWEEN :startDate AND :endDate',
+        { startDate, endDate },
+      )
+      .groupBy('psp.id')
+      .addSelect(
+        'SUM(CASE WHEN manageOrderHistories.quantityType = :borrow THEN manageOrderHistories.quantity ELSE 0 END * COALESCE(manageOrderHistories.price, 0))',
+        'drawTotal',
+      )
+      .addSelect(
+        'SUM(CASE WHEN manageOrderHistories.quantityType = :restock THEN manageOrderHistories.quantity ELSE 0 END * COALESCE(manageOrderHistories.price, 0))',
+        'restockTotal',
+      )
+      .setParameter('borrow', QuantityTypes.BORROW)
+      .setParameter('restock', QuantityTypes.RESTOCK);
 
-      return await query.getRawMany();
+    return await query.getRawMany();
   }
 
-
-  async getCurrentYearOrTotalCost(projectIds: string[], startDate?: Date,endDate?:Date) {
+  async getCurrentYearOrTotalCost(
+    projectIds: string[],
+    startDate?: Date,
+    endDate?: Date,
+  ) {
     // const qtyQuery = this.projectSparePartRepository
     //   .createQueryBuilder('psp')
     //   .leftJoinAndSelect('psp.project', 'project')
@@ -1285,8 +1304,8 @@ export class SparePartsService {
       // });
       totalPriceQuery.andWhere(
         'DATE(psp.createdAt) BETWEEN :startDate AND :endDate',
-        { startDate,endDate},
-      )
+        { startDate, endDate },
+      );
     }
 
     // const { totalBorrowedQuantity } = await qtyQuery.getRawOne();
@@ -1296,15 +1315,19 @@ export class SparePartsService {
     return totalCost;
   }
 
-  async getInventoryCounts(projectIds: string[], startDate?: Date,endDate?:Date) {
+  async getInventoryCounts(
+    projectIds: string[],
+    startDate?: Date,
+    endDate?: Date,
+  ) {
     const inventoryCounts = await this.projectSparePartRepository
       .createQueryBuilder('psp')
       .leftJoinAndSelect('psp.project', 'project')
       .where('project.id IN (:...projectIds)', { projectIds })
-      .andWhere(
-        'DATE(psp.createdAt) BETWEEN :startDate AND :endDate',
-        { startDate,endDate},
-      )
+      .andWhere('DATE(psp.createdAt) BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
       .select([
         'COUNT(psp.id) AS totalCount',
         'SUM(CASE WHEN psp.remainingQuantity <= psp.minimumQuantity AND psp.remainingQuantity != 0 THEN 1 ELSE 0 END) AS lowInventoryCount',
