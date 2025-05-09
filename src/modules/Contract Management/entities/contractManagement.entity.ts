@@ -78,10 +78,4 @@ export class contractManagement extends BaseEntity<Document> {
 
   @Column({ name: 'attachments', type: 'array', nullable: true })
   attachments: string[];
-
-  @CreateDateColumn({ name: 'createdAt', type: 'date' })
-  createdAt?: Date;
-
-  @UpdateDateColumn({ name: 'updatedAt', type: 'date' })
-  updatedAt?: Date;
 }
