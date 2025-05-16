@@ -14,6 +14,7 @@ export const dataSourceOptions: DataSourceOptions = {
   port: +process.env.TYPEORM_PORT,
   type: process.env.TYPEORM_CONNECTION as PostgresConnectionOptions['type'],
   username: process.env.TYPEORM_USERNAME,
+
 };
 
 const dataSource = new DataSource(dataSourceOptions);

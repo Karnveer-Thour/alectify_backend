@@ -76,6 +76,6 @@ export class contractManagement extends BaseEntity<Document> {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ name: 'attachments', type: 'array', nullable: true })
-  attachments: string[];
+  @Column({ name: 'attachments',type:'varchar', nullable: true })
+  attachments: string;
 }
