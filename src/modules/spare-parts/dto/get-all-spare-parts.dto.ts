@@ -134,13 +134,13 @@ export class GetSparePartStatsDto {
     required: false,
   })
   @IsOptional()
-  @IsDateString({},{message:"Enter a valid Start date"})
+  @IsDateString({}, { message: 'Enter a valid Start date' })
   startDate: string;
 
   @ApiProperty({
     required: false,
   })
   @IsOptional()
-  @IsDateString({},{message:"Enter a valid End date"})
+  @IsDateString({}, { message: 'Enter a valid End date' })
   endDate: string;
 }
