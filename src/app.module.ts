@@ -33,6 +33,8 @@ import { IncidentReportsModule } from 'modules/incident-reports/incident-reports
 import { IncidentReportTeamMembersModule } from 'modules/incident-report-team-members/incident-report-team-members.module';
 import { AIModule } from 'modules/ai/ai.module';
 import { IncidentReportCommentsModule } from 'modules/incident-report-comments/incident-report-comments.module';
+import { ContractManagementModule } from 'modules/Contract-management/contract-management.module';
+
 
 @Module({
   imports: [
@@ -79,6 +81,7 @@ import { IncidentReportCommentsModule } from 'modules/incident-report-comments/i
     IncidentReportTeamMembersModule,
     IncidentReportCommentsModule,
     AIModule,
+    ContractManagementModule,
   ],
   controllers: [AppController],
   providers: [
