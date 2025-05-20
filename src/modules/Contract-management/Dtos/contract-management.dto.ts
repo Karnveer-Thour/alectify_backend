@@ -1,24 +1,23 @@
 import { BaseResponseDto } from '@common/dto/base-response.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { Project } from 'aws-sdk/clients/kendra';
 import {
+  IsArray,
   IsBoolean,
   IsDateString,
-  IsDecimal,
+  IsNumber,
   IsOptional,
   IsString,
 } from 'class-validator';
-import { Organization } from 'modules/organizations/entities/organization.entity';
-import { User } from 'modules/users/entities/user.entity';
+import { ContractManagementDocument } from '../entities/contract-management-document.entity';
 
 export class ContractManagementDto extends BaseResponseDto {
   @ApiProperty()
   @IsString()
-  project: Project;
+  project: string;
 
   @ApiProperty()
   @IsString()
-  organization: Organization;
+  organization: string;
 
   @ApiProperty()
   @IsString()
@@ -31,7 +30,7 @@ export class ContractManagementDto extends BaseResponseDto {
   contractNumber: string;
 
   @ApiProperty()
-  @IsDecimal()
+  @IsNumber()
   contractAmount: number;
 
   @ApiProperty()
@@ -62,5 +61,10 @@ export class ContractManagementDto extends BaseResponseDto {
 
   @ApiProperty()
   @IsString()
-  contactUser: User;
+  contactUser: string;
+
+  @ApiProperty()
+  @IsArray()
+  @IsOptional()
+  documents: ContractManagementDocument[];
 }

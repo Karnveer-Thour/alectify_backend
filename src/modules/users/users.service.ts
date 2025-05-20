@@ -47,6 +47,14 @@ export class UsersService {
     }
   }
 
+  async findByEmailWithOrganisation(email: string): Promise<User | undefined> {
+    try {
+      return await this.usersRepository.findOne({ where: { email },relations:['organization'] });
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async findUsersByIds(Ids: string[]) {
     try {
       return await this.usersRepository.findBy({
