@@ -47,7 +47,7 @@ export class ContractManagementController {
 
   @Delete(':id')
   @BypassAuth()
-  async softDeletebyId(@Param('id') id: string): Promise<any> {
+  async softDeleteById(@Param('id') id: string): Promise<any> {
     return await this.contractManagementService.softDeleteById(id);
   }
 
