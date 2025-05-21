@@ -38,4 +38,5 @@ export class CreateUserDto {
   @IsOptional()
   @IsEnum(UserTypes)
   userType: UserTypes;
+  organization: any;
 }
