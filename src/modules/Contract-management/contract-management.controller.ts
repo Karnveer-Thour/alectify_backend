@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { BypassAuth } from 'modules/users/decorators/bypass.decorator';
 import { ContractManagementService } from './contract-management.service';
@@ -19,15 +27,15 @@ export class ContractManagementController {
     );
   }
 
-  @Put()
+  @Put('/update')
   @BypassAuth()
   async update(@Body() contractManagement: ContractManagement): Promise<any> {
     return await this.contractManagementService.update(contractManagement);
   }
 
-  @Get()
+  @Get(':id')
   @BypassAuth()
-  async getById(@Body() id: string): Promise<any> {
+  async getById(@Param() id: string): Promise<any> {
     return await this.contractManagementService.getById(id);
   }
 
@@ -35,5 +43,11 @@ export class ContractManagementController {
   @BypassAuth()
   async getAll(): Promise<any> {
     return await this.contractManagementService.getAll();
+  }
+
+  @Delete(':id')
+  @BypassAuth()
+  async softDeletebyId(@Param() id: string): Promise<any> {
+    return await this.contractManagementService.softDeleteById(id);
   }
 }
