@@ -35,7 +35,6 @@ import { AIModule } from 'modules/ai/ai.module';
 import { IncidentReportCommentsModule } from 'modules/incident-report-comments/incident-report-comments.module';
 import { ContractManagementModule } from 'modules/Contract-management/contract-management.module';
 
-
 @Module({
   imports: [
     CacheModule.register({

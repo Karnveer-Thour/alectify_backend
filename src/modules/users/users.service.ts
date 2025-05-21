@@ -49,7 +49,10 @@ export class UsersService {
 
   async findByEmailWithOrganisation(email: string): Promise<User | undefined> {
     try {
-      return await this.usersRepository.findOne({ where: { email },relations:['organization'] });
+      return await this.usersRepository.findOne({
+        where: { email },
+        relations: ['organization'],
+      });
     } catch (error) {
       throw error;
     }

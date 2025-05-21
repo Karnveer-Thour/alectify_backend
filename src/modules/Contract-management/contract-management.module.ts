@@ -7,8 +7,12 @@ import { UsersModule } from 'modules/users/users.module';
 import { ContractManagementDocumentRepository } from './Repositories/contract-management-document.entity';
 
 @Module({
-  imports:[OrganizationsModule,UsersModule],
+  imports: [OrganizationsModule, UsersModule],
   controllers: [ContractManagementController],
-  providers: [ContractManagementService,ContractManagementRepository,ContractManagementDocumentRepository],
+  providers: [
+    ContractManagementService,
+    ContractManagementRepository,
+    ContractManagementDocumentRepository,
+  ],
 })
 export class ContractManagementModule {}
