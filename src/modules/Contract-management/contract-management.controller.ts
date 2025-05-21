@@ -30,4 +30,10 @@ export class ContractManagementController {
   async getById(@Body() id: string): Promise<any> {
     return await this.contractManagementService.getById(id);
   }
+
+  @Get()
+  @BypassAuth()
+  async getAll(): Promise<any> {
+    return await this.contractManagementService.getAll();
+  }
 }

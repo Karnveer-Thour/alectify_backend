@@ -72,4 +72,12 @@ export class ContractManagementService {
       throw new Error(error);
     }
   }
+
+  async getAll():Promise<any>{
+    try {
+      return await this.contractManagementRepository.find();
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
 }
