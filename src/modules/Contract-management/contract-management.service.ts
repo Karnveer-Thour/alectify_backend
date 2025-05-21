@@ -5,11 +5,13 @@ import { UsersService } from 'modules/users/users.service';
 import { User } from 'modules/users/entities/user.entity';
 import { ContractManagement } from './entities/contract-management.entity';
 import { UpdateContractManagementDto } from './Dtos/update-contract-management.dto';
+import { ContractManagementDocumentRepository } from './Repositories/contract-management-document.entity';
 
 @Injectable()
 export class ContractManagementService {
   constructor(
     private contractManagementRepository: ContractManagementRepository,
+    private contractManagementDocumentRepository:ContractManagementDocumentRepository,
     private usersServices: UsersService,
     private organizationsServices:OrganizationsService,
   ) {}
@@ -85,6 +87,14 @@ export class ContractManagementService {
     try{
       return await this.contractManagementRepository.softDelete(id);
     }catch(error){
+      throw new Error(error);
+    }
+  }
+
+  async softDeleteDocumentById(id:string):Promise<any>{
+    try {
+      return await this.contractManagementDocumentRepository.softDelete(id);
+    } catch (error) {
       throw new Error(error);
     }
   }

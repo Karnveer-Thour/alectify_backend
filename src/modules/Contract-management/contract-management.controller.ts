@@ -50,4 +50,10 @@ export class ContractManagementController {
   async softDeletebyId(@Param() id: string): Promise<any> {
     return await this.contractManagementService.softDeleteById(id);
   }
+
+  @Delete('document/:id')
+  @BypassAuth()
+  async softDeleteDocumentById(@Param() id: string): Promise<any> {
+    return await this.contractManagementService.softDeleteDocumentById(id);
+  }
 }
