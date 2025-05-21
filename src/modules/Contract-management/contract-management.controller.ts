@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { BypassAuth } from 'modules/users/decorators/bypass.decorator';
 import { ContractManagementService } from './contract-management.service';
@@ -12,10 +12,8 @@ export class ContractManagementController {
 
   @Post()
   @BypassAuth()
-  async createContractManagement(
-    @Body() createContract: CreateContractDto,
-  ): Promise<any> {
-    return await this.contractManagementService.createContractManagement(
+  async create(@Body() createContract: CreateContractDto): Promise<any> {
+    return await this.contractManagementService.create(
       createContract.user,
       createContract.contractManagement,
     );
@@ -23,11 +21,13 @@ export class ContractManagementController {
 
   @Put()
   @BypassAuth()
-  async updateContractManagement(
-    @Body() contractManagement: ContractManagement,
-  ): Promise<any> {
-    return await this.contractManagementService.updateContractManagement(
-      contractManagement,
-    );
+  async update(@Body() contractManagement: ContractManagement): Promise<any> {
+    return await this.contractManagementService.update(contractManagement);
+  }
+
+  @Get()
+  @BypassAuth()
+  async getById(@Body() id: string): Promise<any> {
+    return await this.contractManagementService.getById(id);
   }
 }

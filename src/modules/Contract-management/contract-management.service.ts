@@ -3,10 +3,7 @@ import { ContractManagementRepository } from './Repositories/contract-management
 import { OrganizationsService } from 'modules/organizations/organizations.service';
 import { UsersService } from 'modules/users/users.service';
 import { User } from 'modules/users/entities/user.entity';
-import { ContractManagementDto } from './Dtos/contract-management.dto';
 import { ContractManagement } from './entities/contract-management.entity';
-import { Organization } from 'modules/organizations/entities/organization.entity';
-import { UsersRepository } from 'modules/users/repositories/users.repository';
 import { UpdateContractManagementDto } from './Dtos/update-contract-management.dto';
 
 @Injectable()
@@ -17,7 +14,7 @@ export class ContractManagementService {
     private organizationsServices:OrganizationsService,
   ) {}
 
-  async createContractManagement(
+  async create(
     userData:User,
     contractManagementData: ContractManagement,
   ): Promise<any> {
@@ -45,7 +42,7 @@ export class ContractManagementService {
     }
   }
 
-  async updateContractManagement(contractManagementData:ContractManagement):Promise<any>{
+  async update(contractManagementData:ContractManagement):Promise<any>{
     try {
       const contractManagement=await this.contractManagementRepository.findOne({where:{id:contractManagementData.id}});
       if(!contractManagement){
@@ -59,6 +56,18 @@ export class ContractManagementService {
         message: 'Contract management updated successfully'
       }
       return this.contractManagementRepository.update({id:contractManagementData.id},newContractManagement);
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+
+  async getById(id:string):Promise<any>{
+    try {
+      const contractManagement=await this.contractManagementRepository.findOne({where:{id:id}});
+      if(!contractManagement){
+        return "Record does not exists";
+      }
+      return contractManagement;
     } catch (error) {
       throw new Error(error);
     }
