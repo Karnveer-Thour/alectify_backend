@@ -33,7 +33,6 @@ import {
   disAllowedExtensions,
   getFileNameFromFiles,
 } from '@common/utils/utils';
-import { BypassAuth } from 'modules/users/decorators/bypass.decorator';
 import { Response } from 'express';
 
 @ApiBearerAuth()

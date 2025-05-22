@@ -3,9 +3,7 @@ import {
   FIREBASE_CONFIG,
   FirebaseConfigInterface,
 } from '@core/firebase/firebase.config';
-import { initFirebase } from '@core/firebase/firebase.init';
 import { SENTRY_CONFIG, SentryInterface } from '@core/sentry/sentry.config';
-import { initSentry } from '@core/sentry/sentry.init';
 import { CACHE_MANAGER, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';

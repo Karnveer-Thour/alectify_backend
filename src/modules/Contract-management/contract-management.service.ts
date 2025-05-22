@@ -9,6 +9,8 @@ import { ContractManagementDocumentRepository } from './Repositories/contract-ma
 import { CreateUserDto } from 'modules/users/dto/create-user.dto';
 import { plainToInstance } from 'class-transformer';
 import { ContractManagementDto } from './Dtos/contract-management.dto';
+import { FilesUploadService } from 'modules/files-upload/files-upload.service';
+import { ContractManagementDocumentDto } from './Dtos/contract-management-document.dto';
 
 @Injectable()
 export class ContractManagementService {
@@ -17,13 +19,18 @@ export class ContractManagementService {
     private contractManagementDocumentRepository: ContractManagementDocumentRepository,
     private usersServices: UsersService,
     private organizationsServices: OrganizationsService,
+    private fileUploadService: FilesUploadService,
   ) {}
 
   async create(
+    userId: string,
+    token: string,
     userData: CreateUserDto,
     contractManagementData: ContractManagementDto,
+    files:Array<Express.Multer.File>
   ): Promise<any> {
     try {
+      const authUser=await this.usersServices.findOneById(userId)
       const user = await this.usersServices.findByEmailWithOrganisation(
         userData.email,
       );
@@ -49,11 +56,34 @@ export class ContractManagementService {
           contractManagementData.organization = user.organization.id;
         }
       }
+      let uploadedDocumentIds=[];
+      if(files.length){
+        const uploadedFiles = await this.fileUploadService.multiFileUpload(
+          files,
+          'incident-reports',
+          true,
+          token,
+          authUser.branch.company.id,
+        );
+        uploadedDocumentIds=(await Promise.all(
+          uploadedFiles.map((file) => {
+            let documentData:ContractManagementDocumentDto;
+            documentData.filePath=file.url;
+            documentData.fileName=file.originalname;
+            documentData.fileType=file.mimetype;
+            documentData.isActive=true;
+            documentData.uploadedBy=user;
+            const uploadedFileData = this.contractManagementDocumentRepository.save(documentData);
+            return uploadedFileData
+          })
+        )).map((item)=>item.id);
+      }
       const contract = this.contractManagementRepository.create({
         ...contractManagementData,
         project: { id: contractManagementData.project },
         organization: { id: contractManagementData.organization },
         contactUser: { id: contractManagementData.contactUser },
+        documents:uploadedDocumentIds,
       });
       return await this.contractManagementRepository.save(contract);
     } catch (error) {

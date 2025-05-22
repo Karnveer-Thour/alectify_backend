@@ -13,8 +13,8 @@ export class ContractManagementDocumentDto extends BaseResponseDto {
   @IsString()
   fileName: string;
 
-  @ApiProperty()
   @IsString()
+  @IsOptional()
   filePath: string;
 
   @ApiProperty()
@@ -24,31 +24,6 @@ export class ContractManagementDocumentDto extends BaseResponseDto {
   @ApiProperty()
   @IsBoolean()
   isActive: boolean;
-
-  @ApiProperty()
-  @IsDateString()
-  @IsOptional()
-  softDeletedAt: Date;
-
-  @ApiProperty()
-  @IsString()
-  @IsOptional()
-  deletedBy: User;
-
-  @ApiProperty()
-  @IsString()
-  @IsOptional()
-  comment: string;
-
-  @ApiProperty()
-  @IsDateString()
-  @IsOptional()
-  recoveredAt: Date;
-
-  @ApiProperty()
-  @IsString()
-  @IsOptional()
-  recoveredBy: User;
 
   @ApiProperty()
   @IsString()

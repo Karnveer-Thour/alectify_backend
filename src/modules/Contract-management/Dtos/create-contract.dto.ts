@@ -4,6 +4,8 @@ import { ContractManagement } from '../entities/contract-management.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { CreateUserDto } from 'modules/users/dto/create-user.dto';
 import { ContractManagementDto } from './contract-management.dto';
+import { ContractManagementDocumentDto } from './contract-management-document.dto';
+import { IsArray, IsObject, IsOptional } from 'class-validator';
 
 export class CreateContractDto extends BaseResponseDto {
   @ApiProperty()
@@ -11,4 +13,13 @@ export class CreateContractDto extends BaseResponseDto {
 
   @ApiProperty()
   contractManagement: ContractManagementDto;
+
+  @ApiProperty()
+  @IsOptional()
+  contractManagementDocumentsData?: ContractManagementDocumentDto;
+
+    @IsObject()
+    @IsArray()
+    @IsOptional()
+    documents: Express.Multer.File[];
 }

@@ -51,11 +51,6 @@ export class ContractManagementDto extends BaseResponseDto {
   isRecurring: boolean;
 
   @ApiProperty()
-  @IsDateString()
-  @IsOptional()
-  softDeletedAt: Date;
-
-  @ApiProperty()
   @IsBoolean()
   isActive: boolean;
 
