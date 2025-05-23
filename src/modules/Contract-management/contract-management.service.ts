@@ -82,6 +82,12 @@ export class ContractManagementService {
           contractManagementData.organization = organization;
         }
       }
+      const result = await this.contractManagementRepository.save(
+        contractManagementData,
+      );
+
+      //uploaded documents logic
+
       let uploadedDocumentIds = [];
       if (files)
         if (files.length) {
@@ -101,7 +107,7 @@ export class ContractManagementService {
                   fileType: file.mimetype,
                   isActive: true,
                   uploadedBy: user,
-                  contractManagement: null,
+                  contractManagement: result,
                   message: 'File uploaded',
                 };
                 const uploadedFileData =
@@ -111,9 +117,7 @@ export class ContractManagementService {
             )
           ).map((item) => item.id);
         }
-      const result = await this.contractManagementRepository.save(
-        contractManagementData,
-      );
+        
       return {
         status: true,
         statusCode: 200,
