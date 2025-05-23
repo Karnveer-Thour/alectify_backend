@@ -35,39 +35,42 @@ export class ContractManagementService {
       const user = await this.usersServices.findByEmailWithOrganisation(
         contractManagementData.userEmail,
       );
-      const project=await this.projectRepository.findOne({where:{id:contractManagementData.projectId},relations:["branch"]});
+      const project = await this.projectRepository.findOne({
+        where: { id: contractManagementData.projectId },
+        relations: ['branch'],
+      });
       debugger;
-      if(!project){
+      if (!project) {
         throw new InternalServerErrorException('project not found');
       }
-      contractManagementData.project=project;
+      contractManagementData.project = project;
       const organization = await this.organizationsServices.findOneByName(
-          contractManagementData.organizationName,
-        );
+        contractManagementData.organizationName,
+      );
       if (user) {
         contractManagementData.contactUser = user;
-        contractManagementData.organization = organization
+        contractManagementData.organization = organization;
       } else {
-       const user=new User( {
-         id: userId,
-         first_name: contractManagementData.userFirstName,
-         last_name: contractManagementData.userLastName,
-         email: contractManagementData.userEmail,
-         password: 'Fdjkshfkdjshfe@3839798',
-         isSuperuser: false,
-         isStaff: true,
-         isActive: true,
-         emailVerified: true,
-         dateJoined: new Date(),
-         createdAt: new Date(),
-         updatedAt: new Date(),
-         image_url: contractManagementData.userImageUrl,
-         user_type: UserTypes.CUSTOMER,
-         address: '',
-         businessAddress: '',
-         branch: project.branch,
-         organization: organization,
-       })
+        const user = new User({
+          id: userId,
+          first_name: contractManagementData.userFirstName,
+          last_name: contractManagementData.userLastName,
+          email: contractManagementData.userEmail,
+          password: 'Fdjkshfkdjshfe@3839798',
+          isSuperuser: false,
+          isStaff: true,
+          isActive: true,
+          emailVerified: true,
+          dateJoined: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image_url: contractManagementData.userImageUrl,
+          user_type: UserTypes.CUSTOMER,
+          address: '',
+          businessAddress: '',
+          branch: project.branch,
+          organization: organization,
+        });
 
         const newUser = await this.usersServices.createOne(user);
         console.log(newUser);
@@ -108,42 +111,52 @@ export class ContractManagementService {
             )
           ).map((item) => item.id);
         }
-      const result=await this.contractManagementRepository.save(contractManagementData);
+      const result = await this.contractManagementRepository.save(
+        contractManagementData,
+      );
       return {
-      status: true,
-      statusCode: 200,
-      data: result,
-    };
+        status: true,
+        statusCode: 200,
+        data: result,
+      };
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
   }
 
-  async update(contractManagementData: ContractManagement): Promise<any> {
+  async update(
+    contractManagementData: UpdateContractManagementDto,
+    id: string,
+  ): Promise<any> {
     try {
       const contractManagement =
         await this.contractManagementRepository.findOne({
-          where: { id: contractManagementData.id },
+          where: { id: id },
         });
       if (!contractManagement) {
         return 'Record does not exists';
       }
-      const newContractManagement: UpdateContractManagementDto = {
-        description: contractManagementData.description,
-        contractNumber: contractManagementData.contractNumber,
-        contractAmount: contractManagementData.contractAmount,
-        comments: contractManagementData.comments,
-        message: 'Contract management updated successfully',
+      let newContractManagement = {
+        description: '',
+        contractNumber: '',
+        contractAmount: 0,
+        comments: '',
       };
-      const result=await this.contractManagementRepository.update(
-        { id: contractManagementData.id },
+
+      newContractManagement.description=contractManagementData.description??contractManagement.description;
+      newContractManagement.contractNumber=contractManagementData.contractNumber??contractManagement.contractNumber;
+      newContractManagement.contractAmount=contractManagementData.contractAmount??contractManagement.contractAmount;
+      newContractManagement.comments=contractManagementData.comments??contractManagement.comments;
+
+      const result = await this.contractManagementRepository.update(
+        { id: id },
         newContractManagement,
       );
       return {
-      status: true,
-      statusCode: 200,
-      data: result,
-    };
+        status: true,
+        statusCode: 200,
+        data: result,
+      };
     } catch (error) {
       throw new Error(error);
     }
@@ -151,16 +164,17 @@ export class ContractManagementService {
 
   async getById(id: string): Promise<any> {
     try {
-      const result =
-        await this.contractManagementRepository.findOne({ where: { id: id } });
+      const result = await this.contractManagementRepository.findOne({
+        where: { id: id },
+      });
       if (!result) {
         return 'Record does not exists';
       }
       return {
-      status: true,
-      statusCode: 200,
-      data: result,
-    };
+        status: true,
+        statusCode: 200,
+        data: result,
+      };
     } catch (error) {
       throw new Error(error);
     }
@@ -168,12 +182,12 @@ export class ContractManagementService {
 
   async getAll(): Promise<any> {
     try {
-      const result= await this.contractManagementRepository.find();
+      const result = await this.contractManagementRepository.find();
       return {
-      status: true,
-      statusCode: 200,
-      data: result,
-    };
+        status: true,
+        statusCode: 200,
+        data: result,
+      };
     } catch (error) {
       throw new Error(error);
     }
@@ -181,12 +195,12 @@ export class ContractManagementService {
 
   async softDeleteById(id: string): Promise<any> {
     try {
-      const result= await this.contractManagementRepository.softDelete(id);
+      const result = await this.contractManagementRepository.softDelete(id);
       return {
-      status: true,
-      statusCode: 200,
-      data: result,
-    };
+        status: true,
+        statusCode: 200,
+        data: result,
+      };
     } catch (error) {
       throw new Error(error);
     }
@@ -194,12 +208,14 @@ export class ContractManagementService {
 
   async softDeleteDocumentById(id: string): Promise<any> {
     try {
-      const result= await this.contractManagementDocumentRepository.softDelete(id);
+      const result = await this.contractManagementDocumentRepository.softDelete(
+        id,
+      );
       return {
-      status: true,
-      statusCode: 200,
-      data: result,
-    };
+        status: true,
+        statusCode: 200,
+        data: result,
+      };
     } catch (error) {
       throw new Error(error);
     }

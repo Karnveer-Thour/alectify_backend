@@ -17,7 +17,7 @@ import { User } from 'modules/users/entities/user.entity';
 import { Project } from 'modules/projects/entities/project.entity';
 import { Organization } from 'modules/organizations/entities/organization.entity';
 
-export class CreateContractDto extends BaseResponseDto {
+export class CreateContractDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()

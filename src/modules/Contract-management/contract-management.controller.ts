@@ -16,6 +16,7 @@ import { ContractManagementService } from './contract-management.service';
 import { ContractManagement } from './entities/contract-management.entity';
 import { CreateContractDto } from './Dtos/create-contract.dto';
 import { disAllowedExtensions, getFileNameFromFiles } from '@common/utils/utils';
+import { UpdateContractManagementDto } from './Dtos/update-contract-management.dto';
 
 @ApiBearerAuth()
 @ApiTags('contract-management')
@@ -42,10 +43,10 @@ export class ContractManagementController {
     );
   }
 
-  @Put('/update')
+  @Put('/update/:id')
   @BypassAuth()
-  async update(@Body() contractManagement: ContractManagement): Promise<any> {
-    return await this.contractManagementService.update(contractManagement);
+  async update(@Param('id')id:string,@Body() contractManagement: UpdateContractManagementDto): Promise<any> {
+    return await this.contractManagementService.update(contractManagement,id);
   }
 
   @Get(':id')

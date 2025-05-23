@@ -2,7 +2,8 @@ import { BaseResponseDto } from '@common/dto/base-response.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class UpdateContractManagementDto extends BaseResponseDto {
+export class UpdateContractManagementDto{
+
   @ApiProperty()
   @IsString()
   @IsOptional()
@@ -15,6 +16,7 @@ export class UpdateContractManagementDto extends BaseResponseDto {
 
   @ApiProperty()
   @IsNumber()
+  @IsOptional()
   contractAmount?: number;
 
   @ApiProperty()
