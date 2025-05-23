@@ -1,25 +1,106 @@
 import { BaseResponseDto } from '@common/dto/base-response.dto';
-import { User } from 'modules/users/entities/user.entity';
-import { ContractManagement } from '../entities/contract-management.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { CreateUserDto } from 'modules/users/dto/create-user.dto';
-import { ContractManagementDto } from './contract-management.dto';
-import { ContractManagementDocumentDto } from './contract-management-document.dto';
-import { IsArray, IsObject, IsOptional } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { UserTypes } from 'modules/users/models/user-types.enum';
+import { ContractManagementDocument } from '../entities/contract-management-document.entity';
+import { User } from 'modules/users/entities/user.entity';
+import { Project } from 'modules/projects/entities/project.entity';
+import { Organization } from 'modules/organizations/entities/organization.entity';
 
 export class CreateContractDto extends BaseResponseDto {
   @ApiProperty()
-  user: CreateUserDto;
+  @IsNotEmpty()
+  @IsString()
+  userFirstName: string;
 
   @ApiProperty()
-  contractManagement: ContractManagementDto;
+  @IsNotEmpty()
+  @IsString()
+  userLastName: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  userEmail: string;
 
   @ApiProperty()
   @IsOptional()
-  contractManagementDocumentsData?: ContractManagementDocumentDto;
+  @IsString()
+  userImageUrl: string;
 
-    @IsObject()
-    @IsArray()
-    @IsOptional()
-    documents: Express.Multer.File[];
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  organizationName?: string;
+
+  @ApiProperty()
+  @IsEnum(UserTypes)
+  @IsOptional()
+  userType?: UserTypes;
+
+  @IsOptional()
+  organization?: Organization;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  description: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  contractNumber: string;
+
+  @ApiProperty()
+  @IsNumber()
+  contractAmount: number;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  comments: string;
+
+  @ApiProperty()
+  @IsDateString()
+  startDate: Date;
+
+  @ApiProperty()
+  @IsDateString()
+  endDate: Date;
+
+  @ApiProperty()
+  @IsBoolean()
+  isRecurring: boolean;
+
+  @ApiProperty()
+  @IsBoolean()
+  isActive: boolean;
+
+  @IsOptional()
+  contactUser?: User;
+
+  @ApiProperty()
+  projectId:string;
+
+  @IsOptional()
+  project: Project;
+
+  @IsArray()
+  @IsOptional()
+  documents?: ContractManagementDocument[];
+
+  @IsObject()
+  @IsArray()
+  @IsOptional()
+  document?: Express.Multer.File[];
 }

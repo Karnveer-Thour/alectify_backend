@@ -10,20 +10,20 @@ import {
   Req,
   UploadedFiles,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { BypassAuth } from 'modules/users/decorators/bypass.decorator';
 import { ContractManagementService } from './contract-management.service';
 import { ContractManagement } from './entities/contract-management.entity';
 import { CreateContractDto } from './Dtos/create-contract.dto';
 import { disAllowedExtensions, getFileNameFromFiles } from '@common/utils/utils';
 
+@ApiBearerAuth()
 @ApiTags('contract-management')
 @Controller('contract-management')
 export class ContractManagementController {
   constructor(private contractManagementService: ContractManagementService) {}
 
   @Post()
-  @BypassAuth()
   async create(@Req() req,@Body() createContract: CreateContractDto,@UploadedFiles()files: Array<Express.Multer.File>): Promise<any> {
     if (files?.length) {
           const fileNames = getFileNameFromFiles(files);
@@ -34,11 +34,10 @@ export class ContractManagementController {
             );
           }
         }
-    return await this.contractManagementService.create(
+      return await this.contractManagementService.create(
       req.user.id,
       req.headers.authorization,
-      createContract.user,
-      createContract.contractManagement,
+      createContract,
       files
     );
   }
