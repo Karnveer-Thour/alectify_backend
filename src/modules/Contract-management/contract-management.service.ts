@@ -143,10 +143,16 @@ export class ContractManagementService {
         comments: '',
       };
 
-      newContractManagement.description=contractManagementData.description??contractManagement.description;
-      newContractManagement.contractNumber=contractManagementData.contractNumber??contractManagement.contractNumber;
-      newContractManagement.contractAmount=contractManagementData.contractAmount??contractManagement.contractAmount;
-      newContractManagement.comments=contractManagementData.comments??contractManagement.comments;
+      newContractManagement.description =
+        contractManagementData.description ?? contractManagement.description;
+      newContractManagement.contractNumber =
+        contractManagementData.contractNumber ??
+        contractManagement.contractNumber;
+      newContractManagement.contractAmount =
+        contractManagementData.contractAmount ??
+        contractManagement.contractAmount;
+      newContractManagement.comments =
+        contractManagementData.comments ?? contractManagement.comments;
 
       const result = await this.contractManagementRepository.update(
         { id: id },

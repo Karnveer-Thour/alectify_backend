@@ -11,7 +11,12 @@ import { ProjectsRepository } from 'modules/projects/repositories/projects.repos
 import { ProjectsModule } from 'modules/projects/projects.module';
 
 @Module({
-  imports: [OrganizationsModule, UsersModule,FilesUploadModule,ProjectsModule],
+  imports: [
+    OrganizationsModule,
+    UsersModule,
+    FilesUploadModule,
+    ProjectsModule,
+  ],
   controllers: [ContractManagementController],
   providers: [
     ContractManagementService,

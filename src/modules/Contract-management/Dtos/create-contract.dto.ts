@@ -90,7 +90,7 @@ export class CreateContractDto {
   contactUser?: User;
 
   @ApiProperty()
-  projectId:string;
+  projectId: string;
 
   @IsOptional()
   project: Project;

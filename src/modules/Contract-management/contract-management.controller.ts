@@ -15,7 +15,10 @@ import { BypassAuth } from 'modules/users/decorators/bypass.decorator';
 import { ContractManagementService } from './contract-management.service';
 import { ContractManagement } from './entities/contract-management.entity';
 import { CreateContractDto } from './Dtos/create-contract.dto';
-import { disAllowedExtensions, getFileNameFromFiles } from '@common/utils/utils';
+import {
+  disAllowedExtensions,
+  getFileNameFromFiles,
+} from '@common/utils/utils';
 import { UpdateContractManagementDto } from './Dtos/update-contract-management.dto';
 
 @ApiBearerAuth()
@@ -25,28 +28,35 @@ export class ContractManagementController {
   constructor(private contractManagementService: ContractManagementService) {}
 
   @Post()
-  async create(@Req() req,@Body() createContract: CreateContractDto,@UploadedFiles()files: Array<Express.Multer.File>): Promise<any> {
+  async create(
+    @Req() req,
+    @Body() createContract: CreateContractDto,
+    @UploadedFiles() files: Array<Express.Multer.File>,
+  ): Promise<any> {
     if (files?.length) {
-          const fileNames = getFileNameFromFiles(files);
-          const checkFiles = disAllowedExtensions(fileNames);
-          if (checkFiles.length) {
-            throw new BadRequestException(
-              `File type ${checkFiles[0]} is not allowed.`,
-            );
-          }
-        }
-      return await this.contractManagementService.create(
+      const fileNames = getFileNameFromFiles(files);
+      const checkFiles = disAllowedExtensions(fileNames);
+      if (checkFiles.length) {
+        throw new BadRequestException(
+          `File type ${checkFiles[0]} is not allowed.`,
+        );
+      }
+    }
+    return await this.contractManagementService.create(
       req.user.id,
       req.headers.authorization,
       createContract,
-      files
+      files,
     );
   }
 
   @Put('/update/:id')
   @BypassAuth()
-  async update(@Param('id')id:string,@Body() contractManagement: UpdateContractManagementDto): Promise<any> {
-    return await this.contractManagementService.update(contractManagement,id);
+  async update(
+    @Param('id') id: string,
+    @Body() contractManagement: UpdateContractManagementDto,
+  ): Promise<any> {
+    return await this.contractManagementService.update(contractManagement, id);
   }
 
   @Get(':id')
