@@ -137,6 +137,23 @@ export class ProjectsService {
     }
   }
 
+  async findMasterProjectByUserIdAndProjectId(userId: string,projectId:string) {
+    try {
+      return this.projectAccountsRepository
+        .createQueryBuilder('ac')
+        .leftJoinAndSelect('ac.project', 'project')
+        .where('ac.user =:userId', {
+          userId,
+        })
+        .where('ac.project.id =:projectId', {
+          projectId,
+        })
+        .getOne();
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async findOneProjectTeamById(id: string) {
     try {
       return this.projectTeamsRepository.findOneBy({

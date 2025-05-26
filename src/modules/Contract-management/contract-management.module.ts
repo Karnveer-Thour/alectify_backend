@@ -9,6 +9,7 @@ import { FilesUploadModule } from 'modules/files-upload/files-upload.module';
 import { ProjectsService } from 'modules/projects/projects.service';
 import { ProjectsRepository } from 'modules/projects/repositories/projects.repository';
 import { ProjectsModule } from 'modules/projects/projects.module';
+import { UsersRepository } from 'modules/users/repositories/users.repository';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ProjectsModule } from 'modules/projects/projects.module';
     ContractManagementRepository,
     ContractManagementDocumentRepository,
     ProjectsRepository,
+    UsersRepository,
   ],
 })
 export class ContractManagementModule {}

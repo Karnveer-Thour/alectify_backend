@@ -12,6 +12,7 @@ import { CreateContractDto } from './Dtos/create-contract.dto';
 import { UserTypes } from 'modules/users/models/user-types.enum';
 import { ProjectsRepository } from 'modules/projects/repositories/projects.repository';
 import { ProjectsService } from 'modules/projects/projects.service';
+import { UsersRepository } from 'modules/users/repositories/users.repository';
 
 @Injectable()
 export class ContractManagementService {
@@ -21,9 +22,10 @@ export class ContractManagementService {
     private projectRepository: ProjectsRepository,
     private usersServices: UsersService,
     private organizationsServices: OrganizationsService,
+    private projectsService: ProjectsService,
     private fileUploadService: FilesUploadService,
   ) {}
-  
+
   async create(
     userId: string,
     token: string,
@@ -174,8 +176,16 @@ export class ContractManagementService {
   async getById(id: string): Promise<any> {
     try {
       const result = await this.contractManagementRepository.findOne({
-        where: { id: id },
+        where: { id: id },relations:['contact_user','project'],
       });
+      const isAutheticated=await this.projectsService.findMasterProjectByUserIdAndProjectId(result.contact_user.id,result.project.id);
+      if (!isAutheticated) {
+        return {
+          status: false,
+          statusCode: 403,
+          message: 'You do not have permission to access this record',
+        };
+      }
       if (!result) {
         return 'Record does not exists';
       }
