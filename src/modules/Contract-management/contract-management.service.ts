@@ -73,13 +73,13 @@ export class ContractManagementService {
         });
 
         const newUser = await this.usersServices.createOne(user);
-        console.log(newUser);
         if (organization) {
           contractManagementData.contactUser = newUser;
           contractManagementData.organization = organization;
         } else {
+          const newOrganization=await this.organizationsServices.findOneByNameOrCreate(organization.name);
           contractManagementData.contactUser = newUser;
-          contractManagementData.organization = organization;
+          contractManagementData.organization = newOrganization;
         }
       }
       const result = await this.contractManagementRepository.save(
@@ -117,7 +117,7 @@ export class ContractManagementService {
             )
           ).map((item) => item.id);
         }
-        
+
       return {
         status: true,
         statusCode: 200,
