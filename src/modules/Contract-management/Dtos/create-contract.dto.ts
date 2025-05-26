@@ -21,32 +21,27 @@ export class CreateContractDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  userFirstName: string;
+  first_name: string;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  userLastName: string;
+  last_name: string;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  userEmail: string;
-
-  @ApiProperty()
-  @IsOptional()
-  @IsString()
-  userImageUrl: string;
+  email: string;
 
   @ApiProperty()
   @IsString()
   @IsOptional()
-  organizationName?: string;
+  organization_name?: string;
 
   @ApiProperty()
   @IsEnum(UserTypes)
   @IsOptional()
-  userType?: UserTypes;
+  user_type?: UserTypes;
 
   @IsOptional()
   organization?: Organization;
@@ -59,11 +54,11 @@ export class CreateContractDto {
   @ApiProperty()
   @IsString()
   @IsOptional()
-  contractNumber: string;
+  contract_number: string;
 
   @ApiProperty()
   @IsNumber()
-  contractAmount: number;
+  contract_amount: number;
 
   @ApiProperty()
   @IsString()
@@ -72,25 +67,25 @@ export class CreateContractDto {
 
   @ApiProperty()
   @IsDateString()
-  startDate: Date;
+  start_date: Date;
 
   @ApiProperty()
   @IsDateString()
-  endDate: Date;
+  end_date: Date;
 
   @ApiProperty()
   @IsBoolean()
-  isRecurring: boolean;
+  is_recurring: boolean;
 
   @ApiProperty()
   @IsBoolean()
-  isActive: boolean;
+  is_active: boolean;
 
   @IsOptional()
-  contactUser?: User;
+  contact_user?: User;
 
   @ApiProperty()
-  projectId: string;
+  project_id: string;
 
   @IsOptional()
   project: Project;

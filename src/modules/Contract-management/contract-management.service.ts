@@ -23,7 +23,7 @@ export class ContractManagementService {
     private organizationsServices: OrganizationsService,
     private fileUploadService: FilesUploadService,
   ) {}
-
+  
   async create(
     userId: string,
     token: string,
@@ -33,29 +33,28 @@ export class ContractManagementService {
     try {
       const authUser = await this.usersServices.findOneById(userId);
       const user = await this.usersServices.findByEmailWithOrganisation(
-        contractManagementData.userEmail,
+        contractManagementData.email,
       );
       const project = await this.projectRepository.findOne({
-        where: { id: contractManagementData.projectId },
+        where: { id: contractManagementData.project_id },
         relations: ['branch'],
       });
-      debugger;
       if (!project) {
         throw new InternalServerErrorException('project not found');
       }
       contractManagementData.project = project;
       const organization = await this.organizationsServices.findOneByName(
-        contractManagementData.organizationName,
+        contractManagementData.organization_name,
       );
       if (user) {
-        contractManagementData.contactUser = user;
+        contractManagementData.contact_user = user;
         contractManagementData.organization = organization;
       } else {
         const user = new User({
           id: userId,
-          first_name: contractManagementData.userFirstName,
-          last_name: contractManagementData.userLastName,
-          email: contractManagementData.userEmail,
+          first_name: contractManagementData.first_name,
+          last_name: contractManagementData.last_name,
+          email: contractManagementData.email,
           password: 'Fdjkshfkdjshfe@3839798',
           isSuperuser: false,
           isStaff: true,
@@ -64,28 +63,28 @@ export class ContractManagementService {
           dateJoined: new Date(),
           createdAt: new Date(),
           updatedAt: new Date(),
-          image_url: contractManagementData.userImageUrl,
           user_type: UserTypes.CUSTOMER,
           address: '',
           businessAddress: '',
           branch: project.branch,
           organization: organization,
         });
-
-        const newUser = await this.usersServices.createOne(user);
         if (organization) {
-          contractManagementData.contactUser = newUser;
+          const newUser = await this.usersServices.createOne(user);
+          contractManagementData.contact_user = newUser;
           contractManagementData.organization = organization;
         } else {
-          const newOrganization=await this.organizationsServices.findOneByNameOrCreate(organization.name);
-          contractManagementData.contactUser = newUser;
+          const newOrganization=await this.organizationsServices.findOneByNameOrCreate(contractManagementData.organization_name);
+          user.organization=newOrganization;
+          const newUser = await this.usersServices.createOne(user);
+          contractManagementData.contact_user = newUser;
           contractManagementData.organization = newOrganization;
         }
       }
       const result = await this.contractManagementRepository.save(
         contractManagementData,
       );
-
+      console.log(result);
       //uploaded documents logic
 
       let uploadedDocumentIds = [];
@@ -142,19 +141,19 @@ export class ContractManagementService {
       }
       let newContractManagement = {
         description: '',
-        contractNumber: '',
-        contractAmount: 0,
+        contract_number: '',
+        contract_amount: 0,
         comments: '',
       };
 
       newContractManagement.description =
         contractManagementData.description ?? contractManagement.description;
-      newContractManagement.contractNumber =
+      newContractManagement.contract_number =
         contractManagementData.contractNumber ??
-        contractManagement.contractNumber;
-      newContractManagement.contractAmount =
+        contractManagement.contract_number;
+      newContractManagement.contract_amount =
         contractManagementData.contractAmount ??
-        contractManagement.contractAmount;
+        contractManagement.contract_amount;
       newContractManagement.comments =
         contractManagementData.comments ?? contractManagement.comments;
 

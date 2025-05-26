@@ -13,7 +13,7 @@ import {
 import { ContractManagementDocument } from './contract-management-document.entity';
 
 @Entity('contract_management')
-@Index(['project', 'organization', 'contactUser'])
+@Index(['project', 'organization', 'contact_user'])
 export class ContractManagement extends BaseEntity<ContractManagement> {
   @ManyToOne(() => Project, (pro) => pro.id, { nullable: false })
   @JoinColumn({ name: 'project_id' })
@@ -34,7 +34,7 @@ export class ContractManagement extends BaseEntity<ContractManagement> {
     nullable: true,
     length: 255,
   })
-  contractNumber: string;
+  contract_number: string;
 
   @Column({
     name: 'contract_amount',
@@ -42,7 +42,7 @@ export class ContractManagement extends BaseEntity<ContractManagement> {
     nullable: false,
     default: 0,
   })
-  contractAmount: number;
+  contract_amount: number;
 
   @Column({ name: 'comments', type: 'varchar', nullable: true, length: 255 })
   comments: string;
@@ -52,14 +52,14 @@ export class ContractManagement extends BaseEntity<ContractManagement> {
     type: 'timestamp with time zone',
     nullable: false,
   })
-  startDate: Date;
+  start_date: Date;
 
   @Column({
     name: 'endDate',
     type: 'timestamp with time zone',
     nullable: false,
   })
-  endDate: Date;
+  end_date: Date;
 
   @Column({
     name: 'is_recurring',
@@ -67,7 +67,7 @@ export class ContractManagement extends BaseEntity<ContractManagement> {
     nullable: false,
     default: false,
   })
-  isRecurring: boolean;
+  is_recurring: boolean;
 
   @Column({
     name: 'soft_deleted_at',
@@ -77,11 +77,11 @@ export class ContractManagement extends BaseEntity<ContractManagement> {
   softDeletedAt: Date;
 
   @Column({ name: 'is_active', type: 'bool', nullable: false, default: true })
-  isActive: boolean;
+  is_active: boolean;
 
   @ManyToOne(() => User, (user) => user.id, { nullable: false })
   @JoinColumn({ name: 'contact_user_id' })
-  contactUser: User;
+  contact_user: User;
 
   //Inverse relation
   @OneToMany(
