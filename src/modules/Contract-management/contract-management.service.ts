@@ -56,13 +56,13 @@ export class ContractManagementService {
       if (!project) {
         throw new InternalServerErrorException('project not found');
       }
-      const organization = await this.organizationsServices.findOneByName(
-        contractManagementData.organization_name,
-      );
       if (user) {
         contractManagementData.contact_user = user;
-        contractManagementData.organization = organization;
+        contractManagementData.organization = user.organization;
       } else {
+        const organization = await this.organizationsServices.findOneByName(
+          contractManagementData.organization_name,
+        );
         const user = new User({
           id: userId,
           first_name: contractManagementData.first_name,
@@ -155,7 +155,7 @@ export class ContractManagementService {
       const contractManagement =
         await this.contractManagementRepository.findOne({
           where: { id: id },
-          relations: ['project'],
+          relations: ['contact_user', 'project', 'organization'],
         });
       const isAutheticated =
         await this.projectsService.findMasterProjectByUserIdAndProjectId(
@@ -172,31 +172,23 @@ export class ContractManagementService {
       if (!contractManagement) {
         return 'Record does not exists';
       }
-      let newContractManagement = {
-        description: '',
-        contract_number: '',
-        contract_amount: 0,
-        comments: '',
+      const newContractManagement = {
+        ...contractManagement,
+        description:
+          contractManagementData.description ?? contractManagement.description,
+        contract_number:
+          contractManagementData.contractNumber ??
+          contractManagement.contract_number,
+        contract_amount:
+          contractManagementData.contractAmount ??
+          contractManagement.contract_amount,
+        comments:
+          contractManagementData.comments ?? contractManagement.comments,
       };
 
-      newContractManagement.description =
-        contractManagementData.description ?? contractManagement.description;
-      newContractManagement.contract_number =
-        contractManagementData.contractNumber ??
-        contractManagement.contract_number;
-      newContractManagement.contract_amount =
-        contractManagementData.contractAmount ??
-        contractManagement.contract_amount;
-      newContractManagement.comments =
-        contractManagementData.comments ?? contractManagement.comments;
-
-      const result = await this.contractManagementRepository.update(
-        { id: id },
-        newContractManagement,
-      );
+      const result = await this.contractManagementRepository.save(newContractManagement);
       return {
-        status: true,
-        statusCode: 200,
+        message: 'Contract management was updated successfully',
         data: result,
       };
     } catch (error) {
@@ -208,7 +200,7 @@ export class ContractManagementService {
     try {
       const result = await this.contractManagementRepository.findOne({
         where: { id: id },
-        relations: ['contact_user', 'project'],
+        relations: ['contact_user', 'project', 'organization'],
       });
       const isAutheticated =
         await this.projectsService.findMasterProjectByUserIdAndProjectId(
@@ -237,7 +229,9 @@ export class ContractManagementService {
 
   async getAll(): Promise<any> {
     try {
-      const result = await this.contractManagementRepository.find();
+      const result = await this.contractManagementRepository.find({
+        relations: ['contact_user', 'project', 'organization'],
+      });
       return {
         status: true,
         statusCode: 200,
@@ -266,13 +260,12 @@ export class ContractManagementService {
           message: 'You do not have permission to access this record',
         };
       }
-      const deletedRecord = await this.contractManagementRepository.softDelete(
-        id,
-      );
+      result.is_active = false;
+      await this.contractManagementRepository.save(result);
       return {
         status: true,
         statusCode: 200,
-        data: deletedRecord,
+        data: `contract management #${result.id} has been deleted.`,
       };
     } catch (error) {
       throw new Error(error);
