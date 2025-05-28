@@ -232,10 +232,16 @@ export class ContractManagementService {
       const result = await this.contractManagementRepository.find({
         relations: ['contact_user', 'project', 'organization'],
       });
+      const finalResult=[];
+      result.map((cM)=>{
+        if(cM.is_active===true){
+          finalResult.push(cM);
+        }
+      })
       return {
         status: true,
         statusCode: 200,
-        data: result,
+        data: finalResult,
       };
     } catch (error) {
       throw new Error(error);
