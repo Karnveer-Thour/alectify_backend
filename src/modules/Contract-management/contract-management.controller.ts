@@ -51,34 +51,30 @@ export class ContractManagementController {
   }
 
   @Put('/update/:id')
-  @BypassAuth()
   async update(
+    @Req() req,
     @Param('id') id: string,
     @Body() contractManagement: UpdateContractManagementDto,
   ): Promise<any> {
-    return await this.contractManagementService.update(contractManagement, id);
+    return await this.contractManagementService.update(contractManagement, id,req.user.id);
   }
 
   @Get(':id')
-  @BypassAuth()
-  async getById(@Param('id') id: string): Promise<any> {
-    return await this.contractManagementService.getById(id);
+  async getById(@Param('id') id: string, @Req() req): Promise<any> {
+    return await this.contractManagementService.getById(id, req.user.id);
   }
 
   @Get()
-  @BypassAuth()
   async getAll(): Promise<any> {
     return await this.contractManagementService.getAll();
   }
 
   @Delete(':id')
-  @BypassAuth()
-  async softDeleteById(@Param('id') id: string): Promise<any> {
-    return await this.contractManagementService.softDeleteById(id);
+  async softDeleteById(@Param('id') id: string,@Req() req,): Promise<any> {
+    return await this.contractManagementService.softDeleteById(id,req.user.id);
   }
 
   @Delete('document/:id')
-  @BypassAuth()
   async softDeleteDocumentById(@Param('id') id: string): Promise<any> {
     return await this.contractManagementService.softDeleteDocumentById(id);
   }

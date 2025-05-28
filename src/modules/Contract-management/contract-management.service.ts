@@ -33,6 +33,18 @@ export class ContractManagementService {
     files: Array<Express.Multer.File>,
   ): Promise<any> {
     try {
+      const isAutheticated =
+        await this.projectsService.findMasterProjectByUserIdAndProjectId(
+          userId,
+          contractManagementData.project_id,
+        );
+      if (!isAutheticated) {
+        return {
+          status: false,
+          statusCode: 403,
+          message: 'You do not have permission to access this record',
+        };
+      }
       const authUser = await this.usersServices.findOneById(userId);
       const user = await this.usersServices.findByEmailWithOrganisation(
         contractManagementData.email,
@@ -44,7 +56,6 @@ export class ContractManagementService {
       if (!project) {
         throw new InternalServerErrorException('project not found');
       }
-      contractManagementData.project = project;
       const organization = await this.organizationsServices.findOneByName(
         contractManagementData.organization_name,
       );
@@ -76,17 +87,23 @@ export class ContractManagementService {
           contractManagementData.contact_user = newUser;
           contractManagementData.organization = organization;
         } else {
-          const newOrganization=await this.organizationsServices.findOneByNameOrCreate(contractManagementData.organization_name);
-          user.organization=newOrganization;
+          const newOrganization =
+            await this.organizationsServices.findOneByNameOrCreate(
+              contractManagementData.organization_name,
+            );
+          user.organization = newOrganization;
           const newUser = await this.usersServices.createOne(user);
           contractManagementData.contact_user = newUser;
           contractManagementData.organization = newOrganization;
         }
       }
+      const newContractManagement = {
+        ...contractManagementData,
+        project,
+      };
       const result = await this.contractManagementRepository.save(
-        contractManagementData,
+        newContractManagement,
       );
-      console.log(result);
       //uploaded documents logic
 
       let uploadedDocumentIds = [];
@@ -132,12 +149,26 @@ export class ContractManagementService {
   async update(
     contractManagementData: UpdateContractManagementDto,
     id: string,
+    userId: string,
   ): Promise<any> {
     try {
       const contractManagement =
         await this.contractManagementRepository.findOne({
           where: { id: id },
+          relations: ['project'],
         });
+      const isAutheticated =
+        await this.projectsService.findMasterProjectByUserIdAndProjectId(
+          userId,
+          contractManagement.project.id,
+        );
+      if (!isAutheticated) {
+        return {
+          status: false,
+          statusCode: 403,
+          message: 'You do not have permission to access this record',
+        };
+      }
       if (!contractManagement) {
         return 'Record does not exists';
       }
@@ -173,12 +204,17 @@ export class ContractManagementService {
     }
   }
 
-  async getById(id: string): Promise<any> {
+  async getById(id: string, userId: string): Promise<any> {
     try {
       const result = await this.contractManagementRepository.findOne({
-        where: { id: id },relations:['contact_user','project'],
+        where: { id: id },
+        relations: ['contact_user', 'project'],
       });
-      const isAutheticated=await this.projectsService.findMasterProjectByUserIdAndProjectId(result.contact_user.id,result.project.id);
+      const isAutheticated =
+        await this.projectsService.findMasterProjectByUserIdAndProjectId(
+          userId,
+          result.project.id,
+        );
       if (!isAutheticated) {
         return {
           status: false,
@@ -212,13 +248,31 @@ export class ContractManagementService {
     }
   }
 
-  async softDeleteById(id: string): Promise<any> {
+  async softDeleteById(id: string, userId): Promise<any> {
     try {
-      const result = await this.contractManagementRepository.softDelete(id);
+      const result = await this.contractManagementRepository.findOne({
+        where: { id: id },
+        relations: ['project'],
+      });
+      const isAutheticated =
+        await this.projectsService.findMasterProjectByUserIdAndProjectId(
+          userId,
+          result.project.id,
+        );
+      if (!isAutheticated) {
+        return {
+          status: false,
+          statusCode: 403,
+          message: 'You do not have permission to access this record',
+        };
+      }
+      const deletedRecord = await this.contractManagementRepository.softDelete(
+        id,
+      );
       return {
         status: true,
         statusCode: 200,
-        data: result,
+        data: deletedRecord,
       };
     } catch (error) {
       throw new Error(error);

@@ -46,5 +46,3 @@ lerna-debug.log*
 .vscode/launch.json
 .vscode/settings.json
 
-# google cloud config file 
-*.json
