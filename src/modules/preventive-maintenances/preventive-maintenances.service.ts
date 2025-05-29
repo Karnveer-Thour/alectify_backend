@@ -635,7 +635,7 @@ export class PreventiveMaintenancesService {
         pms.andWhere('subProject.id =:subProjectId', {
           subProjectId,
         });
-      }
+      } 
       if (status) {
         pms.andWhere('pm.status IN (:...status)', {
           status,

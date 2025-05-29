@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Req,
   UploadedFiles,
 } from '@nestjs/common';
@@ -20,6 +21,7 @@ import {
   getFileNameFromFiles,
 } from '@common/utils/utils';
 import { UpdateContractManagementDto } from './Dtos/update-contract-management.dto';
+import { GetAllContractManagementQueryDto } from './Dtos/get-all-contract-management.dto';
 
 @ApiBearerAuth()
 @ApiTags('contract-management')
@@ -65,8 +67,34 @@ export class ContractManagementController {
   }
 
   @Get()
-  async getAll(): Promise<any> {
-    return await this.contractManagementService.getAll();
+  async getAll(
+    @Req() req,
+    @Query(){
+    limit=10,
+    page=1,
+    organization_Name=null,
+    contact_userId=null,
+    description=null,
+    comments=null,
+    // contract_amount=null,
+    order_field=null,
+    order_by=null,
+    is_recurring=null,
+  }:GetAllContractManagementQueryDto,): Promise<any> {
+    return await this.contractManagementService.getAll(
+      organization_Name,
+      contact_userId,
+      description,
+      comments,
+      // contract_amount,
+      order_field,
+      order_by,
+      is_recurring,
+      {
+        page,
+        limit,
+        route: req.protocol + '://' + req.get('host') + req.path,
+      },);
   }
 
   @Delete(':id')

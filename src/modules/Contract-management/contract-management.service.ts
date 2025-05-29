@@ -13,6 +13,9 @@ import { UserTypes } from 'modules/users/models/user-types.enum';
 import { ProjectsRepository } from 'modules/projects/repositories/projects.repository';
 import { ProjectsService } from 'modules/projects/projects.service';
 import { UsersRepository } from 'modules/users/repositories/users.repository';
+import { IPaginationOptions } from 'nestjs-typeorm-paginate';
+import { string } from 'joi';
+import { Organization } from 'modules/organizations/entities/organization.entity';
 
 @Injectable()
 export class ContractManagementService {
@@ -227,21 +230,70 @@ export class ContractManagementService {
     }
   }
 
-  async getAll(): Promise<any> {
+  async getAll(
+    organization_Name:string,
+    contact_userId:string,
+    description:string,
+    comments:string,
+    // contract_amount:string,
+    order_field:string,
+    order_by:string,
+    is_recurring:boolean,
+    options:IPaginationOptions): Promise<any> {
     try {
-      const result = await this.contractManagementRepository.find({
-        relations: ['contact_user', 'project', 'organization'],
-      });
-      const finalResult=[];
-      result.map((cM)=>{
-        if(cM.is_active===true){
-          finalResult.push(cM);
-        }
-      })
+      const limit = parseInt(options.limit as string);
+      const page = parseInt(options.page as string);
+
+      const qb = this.contractManagementRepository
+      .createQueryBuilder('cM')
+      .leftJoinAndSelect('cM.project', 'project')
+      .leftJoinAndSelect('cM.contact_user', 'contact_user')
+      .leftJoinAndSelect('cM.organization', 'organization')
+      .where('cM.is_active = :isActive', { isActive: true });
+
+    if (organization_Name) {
+      qb.andWhere('organization.name ILIKE :orgName', { orgName: `%${organization_Name}%` });
+    }
+
+    if (contact_userId) {
+      qb.andWhere('contact_user.id = :contactId', { contactId: contact_userId });
+    }
+
+    if (description) {
+      qb.andWhere('cM.description ILIKE :description', { description: `%${description}%` });
+    }
+
+    if (comments) {
+      qb.andWhere('cM.comments ILIKE :comments', { comments: `%${comments}%` });
+    }
+
+    if (is_recurring !== undefined && is_recurring !== null) {
+      qb.andWhere('cM.is_recurring = :isRecurring', { isRecurring: is_recurring });
+    }
+
+    // Apply ordering if provided and valid
+    const validOrderFields = ['contract_amount', 'start_date', 'end_date'];
+    if (order_field && validOrderFields.includes(order_field)) {
+      qb.orderBy(`cM.${order_field}`, order_by?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC');
+    }
+
+    // Apply pagination
+    qb.skip((page - 1) * limit).take(limit);
+
+    // Get results and count
+    const [data, count] = await qb.getManyAndCount();
+
+      
       return {
-        status: true,
-        statusCode: 200,
-        data: finalResult,
+         message: 'Get all contract management successfully',
+         data,
+         meta:{
+          currentPage: page,
+          itemCount: data.length,
+          itemsPerPage: limit,
+          totalItems: count,
+          totalPages: Math.ceil(count / limit),
+         }
       };
     } catch (error) {
       throw new Error(error);
