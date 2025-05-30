@@ -72,24 +72,18 @@ export class ContractManagementController {
     @Query(){
     limit=10,
     page=1,
-    organization_Name=null,
-    contact_userId=null,
-    description=null,
-    comments=null,
-    // contract_amount=null,
+    search=null,
     order_field=null,
     order_by=null,
     is_recurring=null,
+    is_active=null,
   }:GetAllContractManagementQueryDto,): Promise<any> {
     return await this.contractManagementService.getAll(
-      organization_Name,
-      contact_userId,
-      description,
-      comments,
-      // contract_amount,
+      search,
       order_field,
       order_by,
       is_recurring,
+      is_active,
       {
         page,
         limit,

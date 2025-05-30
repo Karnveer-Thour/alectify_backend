@@ -16,6 +16,9 @@ import { UsersRepository } from 'modules/users/repositories/users.repository';
 import { IPaginationOptions } from 'nestjs-typeorm-paginate';
 import { string } from 'joi';
 import { Organization } from 'modules/organizations/entities/organization.entity';
+import { Brackets } from 'typeorm';
+import { order_by } from './models/order_by.enum';
+import { order_field } from './models/order-field.enum';
 
 @Injectable()
 export class ContractManagementService {
@@ -189,7 +192,9 @@ export class ContractManagementService {
           contractManagementData.comments ?? contractManagement.comments,
       };
 
-      const result = await this.contractManagementRepository.save(newContractManagement);
+      const result = await this.contractManagementRepository.save(
+        newContractManagement,
+      );
       return {
         message: 'Contract management was updated successfully',
         data: result,
@@ -231,69 +236,78 @@ export class ContractManagementService {
   }
 
   async getAll(
-    organization_Name:string,
-    contact_userId:string,
-    description:string,
-    comments:string,
-    // contract_amount:string,
-    order_field:string,
-    order_by:string,
-    is_recurring:boolean,
-    options:IPaginationOptions): Promise<any> {
+    search: string,
+    order_field: order_field,
+    order_by: order_by,
+    is_recurring: boolean,
+    is_active: boolean,
+    options: IPaginationOptions,
+  ): Promise<any> {
     try {
       const limit = parseInt(options.limit as string);
       const page = parseInt(options.page as string);
 
-      const qb = this.contractManagementRepository
-      .createQueryBuilder('cM')
-      .leftJoinAndSelect('cM.project', 'project')
-      .leftJoinAndSelect('cM.contact_user', 'contact_user')
-      .leftJoinAndSelect('cM.organization', 'organization')
-      .where('cM.is_active = :isActive', { isActive: true });
+      const contract_management = this.contractManagementRepository
+        .createQueryBuilder('cM')
+        .leftJoinAndSelect('cM.project', 'project')
+        .leftJoinAndSelect('cM.contact_user', 'contact_user')
+        .leftJoinAndSelect('cM.organization', 'organization');
 
-    if (organization_Name) {
-      qb.andWhere('organization.name ILIKE :orgName', { orgName: `%${organization_Name}%` });
-    }
+      if (search) {
+        contract_management.andWhere(
+          new Brackets((cM) => {
+            cM.orWhere('cM.comments ILIKE :comments', {
+              comments: `%${search}%`,
+            })
+              .orWhere('cM.description ILIKE :description', {
+                description: `%${search}%`,
+              })
+              .orWhere('organization.name ILIKE :org_name', {
+                org_name: `%${search}%`,
+              })
+              .orWhere(
+                "(contact_user.first_name || ' ' || contact_user.last_name) ILIKE :full_name",
+                {
+                  full_name: `%${search}%`,
+                },
+              );
+          }),
+        );
+      }
 
-    if (contact_userId) {
-      qb.andWhere('contact_user.id = :contactId', { contactId: contact_userId });
-    }
+      const active_filter = typeof is_active === 'boolean' ? is_active : true;
+      contract_management.andWhere('cM.is_active = :is_active', {
+        is_active: active_filter,
+      });
+      if (typeof is_recurring === 'boolean') {
+        contract_management.andWhere('cM.is_recurring = :is_recurring', {
+          is_recurring,
+        });
+      }
 
-    if (description) {
-      qb.andWhere('cM.description ILIKE :description', { description: `%${description}%` });
-    }
+      if (order_field && order_by) {
+        contract_management.orderBy(
+          `cM.${order_field}`,
+          order_by.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
+        );
+      } else {
+        contract_management.orderBy('cM.createdAt', 'DESC');
+      }
 
-    if (comments) {
-      qb.andWhere('cM.comments ILIKE :comments', { comments: `%${comments}%` });
-    }
+      contract_management.skip((page - 1) * limit).take(limit);
 
-    if (is_recurring !== undefined && is_recurring !== null) {
-      qb.andWhere('cM.is_recurring = :isRecurring', { isRecurring: is_recurring });
-    }
+      const [data, count] = await contract_management.getManyAndCount();
 
-    // Apply ordering if provided and valid
-    const validOrderFields = ['contract_amount', 'start_date', 'end_date'];
-    if (order_field && validOrderFields.includes(order_field)) {
-      qb.orderBy(`cM.${order_field}`, order_by?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC');
-    }
-
-    // Apply pagination
-    qb.skip((page - 1) * limit).take(limit);
-
-    // Get results and count
-    const [data, count] = await qb.getManyAndCount();
-
-      
       return {
-         message: 'Get all contract management successfully',
-         data,
-         meta:{
+        message: 'Get all contract management successfully',
+        data,
+        meta: {
           currentPage: page,
           itemCount: data.length,
           itemsPerPage: limit,
           totalItems: count,
           totalPages: Math.ceil(count / limit),
-         }
+        },
       };
     } catch (error) {
       throw new Error(error);
