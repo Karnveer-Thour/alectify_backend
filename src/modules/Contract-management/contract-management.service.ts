@@ -19,6 +19,7 @@ import { Organization } from 'modules/organizations/entities/organization.entity
 import { Brackets } from 'typeorm';
 import { order_by } from './models/order_by.enum';
 import { order_field } from './models/order-field.enum';
+import { GetAllContractManagementResponseDto } from './Dtos/get-all-contract-management-response.dto';
 
 @Injectable()
 export class ContractManagementService {
@@ -31,6 +32,14 @@ export class ContractManagementService {
     private projectsService: ProjectsService,
     private fileUploadService: FilesUploadService,
   ) {}
+
+   findTerm=(item)=>{
+        const newItem={
+          ...item,
+          term: (new Date(item.end_date).getMonth() - new Date(item.start_date).getMonth()),
+        }
+        return newItem;
+  }
 
   async create(
     userId: string,
@@ -225,10 +234,13 @@ export class ContractManagementService {
       if (!result) {
         return 'Record does not exists';
       }
+      
+      const data=this.findTerm(result);
+      
       return {
         status: true,
         statusCode: 200,
-        data: result,
+        data,
       };
     } catch (error) {
       throw new Error(error);
@@ -242,7 +254,7 @@ export class ContractManagementService {
     is_recurring: boolean,
     is_active: boolean,
     options: IPaginationOptions,
-  ): Promise<any> {
+  ): Promise<GetAllContractManagementResponseDto> {
     try {
       const limit = parseInt(options.limit as string);
       const page = parseInt(options.page as string);
@@ -288,7 +300,7 @@ export class ContractManagementService {
       if (order_field && order_by) {
         contract_management.orderBy(
           `cM.${order_field}`,
-          order_by.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
+          order_by,
         );
       } else {
         contract_management.orderBy('cM.createdAt', 'DESC');
@@ -296,11 +308,18 @@ export class ContractManagementService {
 
       contract_management.skip((page - 1) * limit).take(limit);
 
-      const [data, count] = await contract_management.getManyAndCount();
+      let [data, count] = await contract_management.getManyAndCount();
+
+      const finalData=[];
+
+      data.map((item)=>{
+        const newItem=this.findTerm(item);
+        finalData.push(newItem);
+      })
 
       return {
         message: 'Get all contract management successfully',
-        data,
+        data:finalData,
         meta: {
           currentPage: page,
           itemCount: data.length,
