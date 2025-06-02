@@ -1,4 +1,3 @@
-import { BaseResponseDto } from '@common/dto/base-response.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsArray,
@@ -14,7 +13,6 @@ import {
 import { UserTypes } from 'modules/users/models/user-types.enum';
 import { ContractManagementDocument } from '../entities/contract-management-document.entity';
 import { User } from 'modules/users/entities/user.entity';
-import { Project } from 'modules/projects/entities/project.entity';
 import { Organization } from 'modules/organizations/entities/organization.entity';
 
 export class CreateContractDto {
@@ -86,13 +84,6 @@ export class CreateContractDto {
 
   @ApiProperty()
   project_id: string;
-
-  @IsOptional()
-  project: Project;
-
-  @IsArray()
-  @IsOptional()
-  documents?: ContractManagementDocument[];
 
   @IsObject()
   @IsArray()

@@ -13,6 +13,12 @@ import { UserTypes } from 'modules/users/models/user-types.enum';
 import { ProjectsRepository } from 'modules/projects/repositories/projects.repository';
 import { ProjectsService } from 'modules/projects/projects.service';
 import { UsersRepository } from 'modules/users/repositories/users.repository';
+import { IPaginationOptions } from 'nestjs-typeorm-paginate';
+import { string } from 'joi';
+import { Organization } from 'modules/organizations/entities/organization.entity';
+import { Brackets } from 'typeorm';
+import { order_by } from './models/order_by.enum';
+import { order_field } from './models/order-field.enum';
 
 @Injectable()
 export class ContractManagementService {
@@ -33,6 +39,18 @@ export class ContractManagementService {
     files: Array<Express.Multer.File>,
   ): Promise<any> {
     try {
+      const isAutheticated =
+        await this.projectsService.findMasterProjectByUserIdAndProjectId(
+          userId,
+          contractManagementData.project_id,
+        );
+      if (!isAutheticated) {
+        return {
+          status: false,
+          statusCode: 403,
+          message: 'You do not have permission to access this record',
+        };
+      }
       const authUser = await this.usersServices.findOneById(userId);
       const user = await this.usersServices.findByEmailWithOrganisation(
         contractManagementData.email,
@@ -44,14 +62,13 @@ export class ContractManagementService {
       if (!project) {
         throw new InternalServerErrorException('project not found');
       }
-      contractManagementData.project = project;
-      const organization = await this.organizationsServices.findOneByName(
-        contractManagementData.organization_name,
-      );
       if (user) {
         contractManagementData.contact_user = user;
-        contractManagementData.organization = organization;
+        contractManagementData.organization = user.organization;
       } else {
+        const organization = await this.organizationsServices.findOneByName(
+          contractManagementData.organization_name,
+        );
         const user = new User({
           id: userId,
           first_name: contractManagementData.first_name,
@@ -76,17 +93,23 @@ export class ContractManagementService {
           contractManagementData.contact_user = newUser;
           contractManagementData.organization = organization;
         } else {
-          const newOrganization=await this.organizationsServices.findOneByNameOrCreate(contractManagementData.organization_name);
-          user.organization=newOrganization;
+          const newOrganization =
+            await this.organizationsServices.findOneByNameOrCreate(
+              contractManagementData.organization_name,
+            );
+          user.organization = newOrganization;
           const newUser = await this.usersServices.createOne(user);
           contractManagementData.contact_user = newUser;
           contractManagementData.organization = newOrganization;
         }
       }
+      const newContractManagement = {
+        ...contractManagementData,
+        project,
+      };
       const result = await this.contractManagementRepository.save(
-        contractManagementData,
+        newContractManagement,
       );
-      console.log(result);
       //uploaded documents logic
 
       let uploadedDocumentIds = [];
@@ -132,40 +155,48 @@ export class ContractManagementService {
   async update(
     contractManagementData: UpdateContractManagementDto,
     id: string,
+    userId: string,
   ): Promise<any> {
     try {
       const contractManagement =
         await this.contractManagementRepository.findOne({
           where: { id: id },
+          relations: ['contact_user', 'project', 'organization'],
         });
+      const isAutheticated =
+        await this.projectsService.findMasterProjectByUserIdAndProjectId(
+          userId,
+          contractManagement.project.id,
+        );
+      if (!isAutheticated) {
+        return {
+          status: false,
+          statusCode: 403,
+          message: 'You do not have permission to access this record',
+        };
+      }
       if (!contractManagement) {
         return 'Record does not exists';
       }
-      let newContractManagement = {
-        description: '',
-        contract_number: '',
-        contract_amount: 0,
-        comments: '',
+      const newContractManagement = {
+        ...contractManagement,
+        description:
+          contractManagementData.description ?? contractManagement.description,
+        contract_number:
+          contractManagementData.contractNumber ??
+          contractManagement.contract_number,
+        contract_amount:
+          contractManagementData.contractAmount ??
+          contractManagement.contract_amount,
+        comments:
+          contractManagementData.comments ?? contractManagement.comments,
       };
 
-      newContractManagement.description =
-        contractManagementData.description ?? contractManagement.description;
-      newContractManagement.contract_number =
-        contractManagementData.contractNumber ??
-        contractManagement.contract_number;
-      newContractManagement.contract_amount =
-        contractManagementData.contractAmount ??
-        contractManagement.contract_amount;
-      newContractManagement.comments =
-        contractManagementData.comments ?? contractManagement.comments;
-
-      const result = await this.contractManagementRepository.update(
-        { id: id },
+      const result = await this.contractManagementRepository.save(
         newContractManagement,
       );
       return {
-        status: true,
-        statusCode: 200,
+        message: 'Contract management was updated successfully',
         data: result,
       };
     } catch (error) {
@@ -173,12 +204,17 @@ export class ContractManagementService {
     }
   }
 
-  async getById(id: string): Promise<any> {
+  async getById(id: string, userId: string): Promise<any> {
     try {
       const result = await this.contractManagementRepository.findOne({
-        where: { id: id },relations:['contact_user','project'],
+        where: { id: id },
+        relations: ['contact_user', 'project', 'organization'],
       });
-      const isAutheticated=await this.projectsService.findMasterProjectByUserIdAndProjectId(result.contact_user.id,result.project.id);
+      const isAutheticated =
+        await this.projectsService.findMasterProjectByUserIdAndProjectId(
+          userId,
+          result.project.id,
+        );
       if (!isAutheticated) {
         return {
           status: false,
@@ -199,26 +235,109 @@ export class ContractManagementService {
     }
   }
 
-  async getAll(): Promise<any> {
+  async getAll(
+    search: string,
+    order_field: order_field,
+    order_by: order_by,
+    is_recurring: boolean,
+    is_active: boolean,
+    options: IPaginationOptions,
+  ): Promise<any> {
     try {
-      const result = await this.contractManagementRepository.find();
+      const limit = parseInt(options.limit as string);
+      const page = parseInt(options.page as string);
+
+      const contract_management = this.contractManagementRepository
+        .createQueryBuilder('cM')
+        .leftJoinAndSelect('cM.project', 'project')
+        .leftJoinAndSelect('cM.contact_user', 'contact_user')
+        .leftJoinAndSelect('cM.organization', 'organization');
+
+      if (search) {
+        contract_management.andWhere(
+          new Brackets((cM) => {
+            cM.orWhere('cM.comments ILIKE :comments', {
+              comments: `%${search}%`,
+            })
+              .orWhere('cM.description ILIKE :description', {
+                description: `%${search}%`,
+              })
+              .orWhere('organization.name ILIKE :org_name', {
+                org_name: `%${search}%`,
+              })
+              .orWhere(
+                "(contact_user.first_name || ' ' || contact_user.last_name) ILIKE :full_name",
+                {
+                  full_name: `%${search}%`,
+                },
+              );
+          }),
+        );
+      }
+
+      const active_filter = typeof is_active === 'boolean' ? is_active : true;
+      contract_management.andWhere('cM.is_active = :is_active', {
+        is_active: active_filter,
+      });
+      if (typeof is_recurring === 'boolean') {
+        contract_management.andWhere('cM.is_recurring = :is_recurring', {
+          is_recurring,
+        });
+      }
+
+      if (order_field && order_by) {
+        contract_management.orderBy(
+          `cM.${order_field}`,
+          order_by.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
+        );
+      } else {
+        contract_management.orderBy('cM.createdAt', 'DESC');
+      }
+
+      contract_management.skip((page - 1) * limit).take(limit);
+
+      const [data, count] = await contract_management.getManyAndCount();
+
       return {
-        status: true,
-        statusCode: 200,
-        data: result,
+        message: 'Get all contract management successfully',
+        data,
+        meta: {
+          currentPage: page,
+          itemCount: data.length,
+          itemsPerPage: limit,
+          totalItems: count,
+          totalPages: Math.ceil(count / limit),
+        },
       };
     } catch (error) {
       throw new Error(error);
     }
   }
 
-  async softDeleteById(id: string): Promise<any> {
+  async softDeleteById(id: string, userId): Promise<any> {
     try {
-      const result = await this.contractManagementRepository.softDelete(id);
+      const result = await this.contractManagementRepository.findOne({
+        where: { id: id },
+        relations: ['project'],
+      });
+      const isAutheticated =
+        await this.projectsService.findMasterProjectByUserIdAndProjectId(
+          userId,
+          result.project.id,
+        );
+      if (!isAutheticated) {
+        return {
+          status: false,
+          statusCode: 403,
+          message: 'You do not have permission to access this record',
+        };
+      }
+      result.is_active = false;
+      await this.contractManagementRepository.save(result);
       return {
         status: true,
         statusCode: 200,
-        data: result,
+        data: `contract management #${result.id} has been deleted.`,
       };
     } catch (error) {
       throw new Error(error);
