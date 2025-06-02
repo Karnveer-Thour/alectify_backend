@@ -41,6 +41,40 @@ export class ContractManagementService {
         return newItem;
   }
 
+  saveNewFiles=async(files,token,authUser,result)=>{
+          const uploadedFiles = await this.fileUploadService.multiFileUpload(
+            files,
+            'incident-reports',
+            true,
+            token,
+            authUser.branch.company.id,
+          );
+          return (
+            await Promise.all(
+              uploadedFiles.map((file) => {
+                const documentData: ContractManagementDocumentDto = {
+                  filePath: file.url,
+                  fileName: file.originalname,
+                  fileType: file.mimetype,
+                  isActive: true,
+                  uploadedBy: authUser,
+                  contractManagement: result,
+                  message: 'File uploaded',
+                };
+                const uploadedFileData =
+                  this.contractManagementDocumentRepository.save(documentData);
+                return uploadedFileData;
+              }),
+            )
+          ).map((item) => item.id);
+  }
+
+  deleteDocumentsById=(ids:Array<string>)=>{
+    ids.map((id)=>{
+       this.softDeleteDocumentById(id);
+    })
+  }
+
   async create(
     userId: string,
     token: string,
@@ -119,37 +153,18 @@ export class ContractManagementService {
       const result = await this.contractManagementRepository.save(
         newContractManagement,
       );
-      //uploaded documents logic
+      // logic to upload already existing files
+
+
+
+
+      //upload new documents logic
 
       let uploadedDocumentIds = [];
-      if (files)
-        if (files.length) {
-          const uploadedFiles = await this.fileUploadService.multiFileUpload(
-            files,
-            'incident-reports',
-            true,
-            token,
-            authUser.branch.company.id,
-          );
-          uploadedDocumentIds = (
-            await Promise.all(
-              uploadedFiles.map((file) => {
-                const documentData: ContractManagementDocumentDto = {
-                  filePath: file.url,
-                  fileName: file.originalname,
-                  fileType: file.mimetype,
-                  isActive: true,
-                  uploadedBy: user,
-                  contractManagement: result,
-                  message: 'File uploaded',
-                };
-                const uploadedFileData =
-                  this.contractManagementDocumentRepository.save(documentData);
-                return uploadedFileData;
-              }),
-            )
-          ).map((item) => item.id);
-        }
+
+      if(files.length){
+        uploadedDocumentIds=await this.saveNewFiles(files,token,authUser,result);
+      }
 
       return {
         status: true,

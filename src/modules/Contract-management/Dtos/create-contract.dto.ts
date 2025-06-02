@@ -11,9 +11,9 @@ import {
   IsString,
 } from 'class-validator';
 import { UserTypes } from 'modules/users/models/user-types.enum';
-import { ContractManagementDocument } from '../entities/contract-management-document.entity';
 import { User } from 'modules/users/entities/user.entity';
 import { Organization } from 'modules/organizations/entities/organization.entity';
+import { ContractManagementDocumentDto } from './contract-management-document.dto';
 
 export class CreateContractDto {
   @ApiProperty()
@@ -85,8 +85,13 @@ export class CreateContractDto {
   @ApiProperty()
   project_id: string;
 
-  @IsObject()
+  @ApiProperty()
   @IsArray()
   @IsOptional()
-  document?: Express.Multer.File[];
+  document?: ContractManagementDocumentDto[];
+  
+  @ApiProperty()
+  @IsArray()
+  @IsOptional()
+  deleteDocumentIds?: string[];
 }
