@@ -3,27 +3,18 @@ import { ContractManagementRepository } from './Repositories/contract-management
 import { OrganizationsService } from 'modules/organizations/organizations.service';
 import { UsersService } from 'modules/users/users.service';
 import { User } from 'modules/users/entities/user.entity';
-import { ContractManagement } from './entities/contract-management.entity';
 import { UpdateContractManagementDto } from './Dtos/update-contract-management.dto';
 import { ContractManagementDocumentRepository } from './Repositories/contract-management-document.entity';
-import { FilesUploadService } from 'modules/files-upload/files-upload.service';
 import { ContractManagementDocumentDto } from './Dtos/contract-management-document.dto';
-import {
-  CreateContractDto
-} from './Dtos/create-contract-management.dto';
+import { CreateContractDto } from './Dtos/create-contract-management.dto';
 import { UserTypes } from 'modules/users/models/user-types.enum';
 import { ProjectsRepository } from 'modules/projects/repositories/projects.repository';
 import { ProjectsService } from 'modules/projects/projects.service';
-import { UsersRepository } from 'modules/users/repositories/users.repository';
 import { IPaginationOptions } from 'nestjs-typeorm-paginate';
-import { string } from 'joi';
-import { Organization } from 'modules/organizations/entities/organization.entity';
 import { Brackets } from 'typeorm';
 import { order_by } from './models/order_by.enum';
 import { order_field } from './models/order-field.enum';
 import { GetAllContractManagementResponseDto } from './Dtos/get-all-contract-management-response.dto';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
 import { ContractManagementDocumentService } from './contract-management-document.service';
 
 @Injectable()
@@ -35,7 +26,6 @@ export class ContractManagementService {
     private usersServices: UsersService,
     private organizationsServices: OrganizationsService,
     private projectsService: ProjectsService,
-    private fileUploadService: FilesUploadService,
     private ContractManagementDocumentService: ContractManagementDocumentService,
   ) {}
 
@@ -130,27 +120,29 @@ export class ContractManagementService {
       //upload new documents logic
 
       if (files?.length) {
-        const uploadedFiles = await this.ContractManagementDocumentService.uploadFiles(
-          files,
-          token,
-          authUser,
-        );
-        
-          await Promise.all(
-            uploadedFiles.map(async (file) => {
-              const documentData: ContractManagementDocumentDto = {
-                filePath: file.url,
-                fileName: file.originalname,
-                fileType: file.mimetype,
-                isActive: true,
-                uploadedBy: authUser,
-                contractManagement: result,
-                message: 'File uploaded',
-              };
-              return await this.ContractManagementDocumentService.saveFile(documentData);
-            }),
-          )
+        const uploadedFiles =
+          await this.ContractManagementDocumentService.uploadFiles(
+            files,
+            token,
+            authUser,
+          );
 
+        await Promise.all(
+          uploadedFiles.map(async (file) => {
+            const documentData: ContractManagementDocumentDto = {
+              filePath: file.url,
+              fileName: file.originalname,
+              fileType: file.mimetype,
+              isActive: true,
+              uploadedBy: authUser,
+              contractManagement: result,
+              message: 'File uploaded',
+            };
+            return await this.ContractManagementDocumentService.saveFile(
+              documentData,
+            );
+          }),
+        );
       }
 
       return {

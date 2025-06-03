@@ -72,7 +72,7 @@ export class GetAllContractManagementQueryDto {
     return value;
   })
   is_recurring: boolean;
-  
+
   @ApiProperty({
     required: false,
     type: 'boolean',

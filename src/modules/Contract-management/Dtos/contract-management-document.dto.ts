@@ -1,6 +1,6 @@
 import { BaseResponseDto } from '@common/dto/base-response.dto';
 import { ContractManagement } from '../entities/contract-management.entity';
-import { IsBoolean, IsDateString, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from 'modules/users/entities/user.entity';
 

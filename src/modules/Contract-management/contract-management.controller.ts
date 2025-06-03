@@ -12,12 +12,8 @@ import {
   UploadedFiles,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { BypassAuth } from 'modules/users/decorators/bypass.decorator';
 import { ContractManagementService } from './contract-management.service';
-import { ContractManagement } from './entities/contract-management.entity';
-import {
-  CreateContractDto
-} from './Dtos/create-contract-management.dto';
+import { CreateContractDto } from './Dtos/create-contract-management.dto';
 import {
   disAllowedExtensions,
   getFileNameFromFiles,

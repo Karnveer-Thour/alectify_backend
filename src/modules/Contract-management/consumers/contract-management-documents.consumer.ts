@@ -10,7 +10,7 @@ import { ContractManagementDocumentService } from '../contract-management-docume
 @Processor('masterPreventiveMaintenanceDocuments')
 export class MasterPreventiveMaintenanceDocumentsConsumer {
   constructor(
-    private ContractManagementDocumentService:ContractManagementDocumentService,
+    private ContractManagementDocumentService: ContractManagementDocumentService,
   ) {}
 
   @Process('uploadFilesAndImagesForCM')
@@ -36,7 +36,6 @@ export class MasterPreventiveMaintenanceDocumentsConsumer {
         job.data.token,
         job.data.cmDto,
       );
-
     } catch (error) {
       console.log('error when creating createOneYearCMs: ', error);
     }

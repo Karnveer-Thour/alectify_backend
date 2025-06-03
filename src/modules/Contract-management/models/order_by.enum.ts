@@ -1,4 +1,4 @@
-export enum order_by{
-    ASC="ASC",
-    DESC="DESC",
+export enum order_by {
+  ASC = 'ASC',
+  DESC = 'DESC',
 }

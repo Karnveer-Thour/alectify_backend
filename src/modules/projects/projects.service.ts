@@ -137,7 +137,10 @@ export class ProjectsService {
     }
   }
 
-  async findMasterProjectByUserIdAndProjectId(userId: string,projectId:string) {
+  async findMasterProjectByUserIdAndProjectId(
+    userId: string,
+    projectId: string,
+  ) {
     try {
       return this.projectAccountsRepository
         .createQueryBuilder('ac')
