@@ -33,47 +33,38 @@ export class ContractManagementService {
     private fileUploadService: FilesUploadService,
   ) {}
 
-   findTerm=(item)=>{
-        const newItem={
-          ...item,
-          term: (new Date(item.end_date).getMonth() - new Date(item.start_date).getMonth()),
-        }
-        return newItem;
-  }
+  findTerm = (item) => {
+    const newItem = {
+      ...item,
+      term:
+        new Date(item.end_date).getMonth() -
+        new Date(item.start_date).getMonth(),
+    };
+    return newItem;
+  };
 
-  saveNewFiles=async(files,token,authUser,result)=>{
-          const uploadedFiles = await this.fileUploadService.multiFileUpload(
-            files,
-            'incident-reports',
-            true,
-            token,
-            authUser.branch.company.id,
-          );
-          return (
-            await Promise.all(
-              uploadedFiles.map((file) => {
-                const documentData: ContractManagementDocumentDto = {
-                  filePath: file.url,
-                  fileName: file.originalname,
-                  fileType: file.mimetype,
-                  isActive: true,
-                  uploadedBy: authUser,
-                  contractManagement: result,
-                  message: 'File uploaded',
-                };
-                const uploadedFileData =
-                  this.contractManagementDocumentRepository.save(documentData);
-                return uploadedFileData;
-              }),
-            )
-          ).map((item) => item.id);
-  }
+  saveFile = async (uploadedFileData: ContractManagementDocumentDto) => {
+    const savedFileData =
+      this.contractManagementDocumentRepository.save(uploadedFileData);
+    return savedFileData;
+  };
 
-  deleteDocumentsById=(ids:Array<string>)=>{
-    ids.map((id)=>{
-       this.softDeleteDocumentById(id);
-    })
-  }
+  uploadFiles = async (files, token, authUser, result) => {
+    const uploadedFiles = await this.fileUploadService.multiFileUpload(
+      files,
+      'incident-reports',
+      true,
+      token,
+      authUser.branch.company.id,
+    );
+    return uploadedFiles;
+  };
+
+  deleteDocumentsById = (ids: Array<string>) => {
+    ids.map((id) => {
+      this.softDeleteDocumentById(id);
+    });
+  };
 
   async create(
     userId: string,
@@ -153,17 +144,34 @@ export class ContractManagementService {
       const result = await this.contractManagementRepository.save(
         newContractManagement,
       );
-      // logic to upload already existing files
-
-
-
 
       //upload new documents logic
 
       let uploadedDocumentIds = [];
 
-      if(files.length){
-        uploadedDocumentIds=await this.saveNewFiles(files,token,authUser,result);
+      if (files.length) {
+        const uploadedFiles = await this.uploadFiles(
+          files,
+          token,
+          authUser,
+          result,
+        );
+        uploadedDocumentIds = (
+          await Promise.all(
+            uploadedFiles.map(async (file) => {
+              const documentData: ContractManagementDocumentDto = {
+                filePath: file.url,
+                fileName: file.originalname,
+                fileType: file.mimetype,
+                isActive: true,
+                uploadedBy: authUser,
+                contractManagement: result,
+                message: 'File uploaded',
+              };
+              return await this.saveFile(documentData);
+            }),
+          )
+        ).map((item) => item.id);
       }
 
       return {
@@ -249,9 +257,9 @@ export class ContractManagementService {
       if (!result) {
         return 'Record does not exists';
       }
-      
-      const data=this.findTerm(result);
-      
+
+      const data = this.findTerm(result);
+
       return {
         status: true,
         statusCode: 200,
@@ -313,10 +321,7 @@ export class ContractManagementService {
       }
 
       if (order_field && order_by) {
-        contract_management.orderBy(
-          `cM.${order_field}`,
-          order_by,
-        );
+        contract_management.orderBy(`cM.${order_field}`, order_by);
       } else {
         contract_management.orderBy('cM.createdAt', 'DESC');
       }
@@ -325,16 +330,16 @@ export class ContractManagementService {
 
       let [data, count] = await contract_management.getManyAndCount();
 
-      const finalData=[];
+      const finalData = [];
 
-      data.map((item)=>{
-        const newItem=this.findTerm(item);
+      data.map((item) => {
+        const newItem = this.findTerm(item);
         finalData.push(newItem);
-      })
+      });
 
       return {
         message: 'Get all contract management successfully',
-        data:finalData,
+        data: finalData,
         meta: {
           currentPage: page,
           itemCount: data.length,

@@ -1,19 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsArray,
   IsBoolean,
   IsDateString,
   IsEnum,
   IsNotEmpty,
   IsNumber,
-  IsObject,
   IsOptional,
   IsString,
 } from 'class-validator';
 import { UserTypes } from 'modules/users/models/user-types.enum';
 import { User } from 'modules/users/entities/user.entity';
 import { Organization } from 'modules/organizations/entities/organization.entity';
-import { ContractManagementDocumentDto } from './contract-management-document.dto';
 
 export class CreateContractDto {
   @ApiProperty()
@@ -84,14 +81,4 @@ export class CreateContractDto {
 
   @ApiProperty()
   project_id: string;
-
-  @ApiProperty()
-  @IsArray()
-  @IsOptional()
-  document?: ContractManagementDocumentDto[];
-  
-  @ApiProperty()
-  @IsArray()
-  @IsOptional()
-  deleteDocumentIds?: string[];
 }
