@@ -10,9 +10,14 @@ import { ProjectsService } from 'modules/projects/projects.service';
 import { ProjectsRepository } from 'modules/projects/repositories/projects.repository';
 import { ProjectsModule } from 'modules/projects/projects.module';
 import { UsersRepository } from 'modules/users/repositories/users.repository';
+import { ContractManagementDocumentService } from './contract-management-document.service';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
+     BullModule.registerQueue({
+      name: 'contractManagementDocuments',
+    }),
     OrganizationsModule,
     UsersModule,
     FilesUploadModule,
@@ -21,6 +26,7 @@ import { UsersRepository } from 'modules/users/repositories/users.repository';
   controllers: [ContractManagementController],
   providers: [
     ContractManagementService,
+    ContractManagementDocumentService,
     ContractManagementRepository,
     ContractManagementDocumentRepository,
     ProjectsRepository,

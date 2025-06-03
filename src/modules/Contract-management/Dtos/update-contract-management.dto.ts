@@ -1,6 +1,7 @@
 import { BaseResponseDto } from '@common/dto/base-response.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
+import { ContractManagementDocumentDto } from './contract-management-document.dto';
 
 export class UpdateContractManagementDto {
   @ApiProperty()
@@ -22,4 +23,14 @@ export class UpdateContractManagementDto {
   @IsString()
   @IsOptional()
   comments?: string;
+
+  @ApiProperty()
+  @IsArray()
+  @IsOptional()
+  existingFiles?: ContractManagementDocumentDto[];
+  
+  @ApiProperty()
+  @IsArray()
+  @IsOptional()
+  deletefilesIds?: string[];
 }

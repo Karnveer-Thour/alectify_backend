@@ -15,7 +15,9 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { BypassAuth } from 'modules/users/decorators/bypass.decorator';
 import { ContractManagementService } from './contract-management.service';
 import { ContractManagement } from './entities/contract-management.entity';
-import { CreateContractDto } from './Dtos/create-contract.dto';
+import {
+  CreateContractDto
+} from './Dtos/create-contract-management.dto';
 import {
   disAllowedExtensions,
   getFileNameFromFiles,
@@ -33,10 +35,10 @@ export class ContractManagementController {
   async create(
     @Req() req,
     @Body() createContract: CreateContractDto,
-    @UploadedFiles() files: Array<Express.Multer.File>,
+    @UploadedFiles() documents: Array<Express.Multer.File>,
   ): Promise<any> {
-    if (files?.length) {
-      const fileNames = getFileNameFromFiles(files);
+    if (documents) {
+      const fileNames = getFileNameFromFiles(documents);
       const checkFiles = disAllowedExtensions(fileNames);
       if (checkFiles.length) {
         throw new BadRequestException(
@@ -48,7 +50,7 @@ export class ContractManagementController {
       req.user.id,
       req.headers.authorization,
       createContract,
-      files,
+      documents,
     );
   }
 
@@ -57,8 +59,24 @@ export class ContractManagementController {
     @Req() req,
     @Param('id') id: string,
     @Body() contractManagement: UpdateContractManagementDto,
+    @UploadedFiles() files: Array<Express.Multer.File>,
   ): Promise<any> {
-    return await this.contractManagementService.update(contractManagement, id,req.user.id);
+    if (files) {
+      const fileNames = getFileNameFromFiles(files);
+      const checkFiles = disAllowedExtensions(fileNames);
+      if (checkFiles.length) {
+        throw new BadRequestException(
+          `File type ${checkFiles[0]} is not allowed.`,
+        );
+      }
+    }
+    return await this.contractManagementService.update(
+      contractManagement,
+      id,
+      req.user,
+      req.headers.authorization,
+      files,
+    );
   }
 
   @Get(':id')
@@ -69,15 +87,17 @@ export class ContractManagementController {
   @Get()
   async getAll(
     @Req() req,
-    @Query(){
-    limit=10,
-    page=1,
-    search=null,
-    order_field=null,
-    order_by=null,
-    is_recurring=null,
-    is_active=null,
-  }:GetAllContractManagementQueryDto,): Promise<any> {
+    @Query()
+    {
+      limit = 10,
+      page = 1,
+      search = null,
+      order_field = null,
+      order_by = null,
+      is_recurring = null,
+      is_active = null,
+    }: GetAllContractManagementQueryDto,
+  ): Promise<any> {
     return await this.contractManagementService.getAll(
       search,
       order_field,
@@ -88,12 +108,13 @@ export class ContractManagementController {
         page,
         limit,
         route: req.protocol + '://' + req.get('host') + req.path,
-      },);
+      },
+    );
   }
 
   @Delete(':id')
-  async softDeleteById(@Param('id') id: string,@Req() req,): Promise<any> {
-    return await this.contractManagementService.softDeleteById(id,req.user.id);
+  async softDeleteById(@Param('id') id: string, @Req() req): Promise<any> {
+    return await this.contractManagementService.softDeleteById(id, req.user.id);
   }
 
   @Delete('document/:id')

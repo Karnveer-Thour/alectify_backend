@@ -8,7 +8,9 @@ import { UpdateContractManagementDto } from './Dtos/update-contract-management.d
 import { ContractManagementDocumentRepository } from './Repositories/contract-management-document.entity';
 import { FilesUploadService } from 'modules/files-upload/files-upload.service';
 import { ContractManagementDocumentDto } from './Dtos/contract-management-document.dto';
-import { CreateContractDto } from './Dtos/create-contract.dto';
+import {
+  CreateContractDto
+} from './Dtos/create-contract-management.dto';
 import { UserTypes } from 'modules/users/models/user-types.enum';
 import { ProjectsRepository } from 'modules/projects/repositories/projects.repository';
 import { ProjectsService } from 'modules/projects/projects.service';
@@ -20,6 +22,9 @@ import { Brackets } from 'typeorm';
 import { order_by } from './models/order_by.enum';
 import { order_field } from './models/order-field.enum';
 import { GetAllContractManagementResponseDto } from './Dtos/get-all-contract-management-response.dto';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
+import { ContractManagementDocumentService } from './contract-management-document.service';
 
 @Injectable()
 export class ContractManagementService {
@@ -31,6 +36,7 @@ export class ContractManagementService {
     private organizationsServices: OrganizationsService,
     private projectsService: ProjectsService,
     private fileUploadService: FilesUploadService,
+    private ContractManagementDocumentService: ContractManagementDocumentService,
   ) {}
 
   findTerm = (item) => {
@@ -43,31 +49,8 @@ export class ContractManagementService {
     return newItem;
   };
 
-  saveFile = async (uploadedFileData: ContractManagementDocumentDto) => {
-    const savedFileData =
-      this.contractManagementDocumentRepository.save(uploadedFileData);
-    return savedFileData;
-  };
-
-  uploadFiles = async (files, token, authUser, result) => {
-    const uploadedFiles = await this.fileUploadService.multiFileUpload(
-      files,
-      'incident-reports',
-      true,
-      token,
-      authUser.branch.company.id,
-    );
-    return uploadedFiles;
-  };
-
-  deleteDocumentsById = (ids: Array<string>) => {
-    ids.map((id) => {
-      this.softDeleteDocumentById(id);
-    });
-  };
-
   async create(
-    userId: string,
+    authUser: User,
     token: string,
     contractManagementData: CreateContractDto,
     files: Array<Express.Multer.File>,
@@ -75,7 +58,7 @@ export class ContractManagementService {
     try {
       const isAutheticated =
         await this.projectsService.findMasterProjectByUserIdAndProjectId(
-          userId,
+          authUser.id,
           contractManagementData.project_id,
         );
       if (!isAutheticated) {
@@ -85,8 +68,7 @@ export class ContractManagementService {
           message: 'You do not have permission to access this record',
         };
       }
-      const authUser = await this.usersServices.findOneById(userId);
-      const user = await this.usersServices.findByEmailWithOrganisation(
+      const existingUser = await this.usersServices.findByEmailWithOrganisation(
         contractManagementData.email,
       );
       const project = await this.projectRepository.findOne({
@@ -96,15 +78,15 @@ export class ContractManagementService {
       if (!project) {
         throw new InternalServerErrorException('project not found');
       }
-      if (user) {
-        contractManagementData.contact_user = user;
-        contractManagementData.organization = user.organization;
+      if (existingUser) {
+        contractManagementData.contact_user = existingUser;
+        contractManagementData.organization = existingUser.organization;
       } else {
         const organization = await this.organizationsServices.findOneByName(
           contractManagementData.organization_name,
         );
         const user = new User({
-          id: userId,
+          id: existingUser.id,
           first_name: contractManagementData.first_name,
           last_name: contractManagementData.last_name,
           email: contractManagementData.email,
@@ -147,16 +129,13 @@ export class ContractManagementService {
 
       //upload new documents logic
 
-      let uploadedDocumentIds = [];
-
-      if (files.length) {
-        const uploadedFiles = await this.uploadFiles(
+      if (files?.length) {
+        const uploadedFiles = await this.ContractManagementDocumentService.uploadFiles(
           files,
           token,
           authUser,
-          result,
         );
-        uploadedDocumentIds = (
+        
           await Promise.all(
             uploadedFiles.map(async (file) => {
               const documentData: ContractManagementDocumentDto = {
@@ -168,10 +147,10 @@ export class ContractManagementService {
                 contractManagement: result,
                 message: 'File uploaded',
               };
-              return await this.saveFile(documentData);
+              return await this.ContractManagementDocumentService.saveFile(documentData);
             }),
           )
-        ).map((item) => item.id);
+
       }
 
       return {
@@ -187,7 +166,9 @@ export class ContractManagementService {
   async update(
     contractManagementData: UpdateContractManagementDto,
     id: string,
-    userId: string,
+    user: User,
+    token: string,
+    files: Array<Express.Multer.File>,
   ): Promise<any> {
     try {
       const contractManagement =
@@ -197,7 +178,7 @@ export class ContractManagementService {
         });
       const isAutheticated =
         await this.projectsService.findMasterProjectByUserIdAndProjectId(
-          userId,
+          user.id,
           contractManagement.project.id,
         );
       if (!isAutheticated) {
@@ -227,6 +208,14 @@ export class ContractManagementService {
       const result = await this.contractManagementRepository.save(
         newContractManagement,
       );
+
+      await this.ContractManagementDocumentService.uploadImagesForCMQueue(
+        files,
+        user,
+        token,
+        { ...contractManagementData },
+      );
+
       return {
         message: 'Contract management was updated successfully',
         data: result,
