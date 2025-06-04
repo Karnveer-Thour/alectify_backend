@@ -4,7 +4,7 @@ import { IsBoolean, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from 'modules/users/entities/user.entity';
 
-export class ContractManagementDocumentDto extends BaseResponseDto {
+export class ContractManagementDocumentDto {
   @ApiProperty()
   @IsString()
   contractManagement: ContractManagement;

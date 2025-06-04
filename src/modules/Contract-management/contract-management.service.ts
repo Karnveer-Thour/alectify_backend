@@ -11,7 +11,7 @@ import { UserTypes } from 'modules/users/models/user-types.enum';
 import { ProjectsRepository } from 'modules/projects/repositories/projects.repository';
 import { ProjectsService } from 'modules/projects/projects.service';
 import { IPaginationOptions } from 'nestjs-typeorm-paginate';
-import { Brackets } from 'typeorm';
+import { Brackets, In } from 'typeorm';
 import { order_by } from './models/order_by.enum';
 import { order_field } from './models/order-field.enum';
 import { GetAllContractManagementResponseDto } from './Dtos/get-all-contract-management-response.dto';
@@ -136,7 +136,6 @@ export class ContractManagementService {
               isActive: true,
               uploadedBy: authUser,
               contractManagement: result,
-              message: 'File uploaded',
             };
             return await this.ContractManagementDocumentService.saveFile(
               documentData,
@@ -166,7 +165,12 @@ export class ContractManagementService {
       const contractManagement =
         await this.contractManagementRepository.findOne({
           where: { id: id },
-          relations: ['contact_user','contact_user.branch.company', 'project', 'organization'],
+          relations: [
+            'contact_user',
+            'contact_user.branch.company',
+            'project',
+            'organization',
+          ],
         });
       const isAutheticated =
         await this.projectsService.findMasterProjectByUserIdAndProjectId(
@@ -183,6 +187,24 @@ export class ContractManagementService {
       if (!contractManagement) {
         return 'Record does not exists';
       }
+
+      user = await this.usersServices.findOneById(user.id);
+
+      if (contractManagementData.deletefilesIds?.length) {
+        const images = await this.contractManagementDocumentRepository.find({
+          where: { id: In(contractManagementData.deletefilesIds) },
+        });
+
+        if (images.length !== contractManagementData.deletefilesIds.length) {
+          throw new Error('Any of given document id does not exist');
+        }
+
+        await this.ContractManagementDocumentService.deleteImagesByIds(
+          user,
+          contractManagementData.deletefilesIds,
+        );
+      }
+
       const newContractManagement = {
         ...contractManagement,
         description:
@@ -201,13 +223,14 @@ export class ContractManagementService {
         newContractManagement,
       );
 
-     const value= await this.ContractManagementDocumentService.uploadImagesForCMQueue(
-        files,
-        user,
-        token,
-        { ...contractManagementData },
-        contractManagement,
-      );
+      const value =
+        await this.ContractManagementDocumentService.uploadImagesForCMQueue(
+          files,
+          user,
+          token,
+          { ...contractManagementData },
+          contractManagement,
+        );
 
       return {
         message: 'Contract management was updated successfully',

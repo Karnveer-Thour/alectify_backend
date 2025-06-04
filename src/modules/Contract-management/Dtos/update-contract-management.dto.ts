@@ -26,11 +26,10 @@ export class UpdateContractManagementDto {
   @ApiProperty()
   @IsArray()
   @IsOptional()
-  existingFiles?: ContractManagementDocumentDto[];
+  importedFiles?: ContractManagementDocumentDto[];
 
   @ApiProperty()
   @IsArray()
   @IsOptional()
   deletefilesIds?: string[];
-  contractManagement: any;
 }

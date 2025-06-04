@@ -17,6 +17,7 @@ export class ContractManagementDocumentService {
     private readonly fileUploadService: FilesUploadService,
     @InjectQueue('contractManagementDocuments')
     private readonly cmDocumentsQueue: Queue,
+    private contractManagementRepository: ContractManagementDocumentRepository,
   ) {}
 
   uploadFiles = async (
@@ -45,67 +46,44 @@ export class ContractManagementDocumentService {
     user: User,
     token: string,
     cmDto: UpdateContractManagementDto,
-    cm:ContractManagement,
+    cm: ContractManagement,
   ) {
     try {
       let uploadedImages = [];
-
-      if (cmDto.deletefilesIds?.length) {
-        const images = await this.contractManagementDocumentRepository.find({
-          where: { id: In(cmDto.deletefilesIds) },
-        });
-
-        if (images.length !== cmDto.deletefilesIds.length) {
-          throw new Error('Any of given document id does not exist');
-        }
-
-        await this.deleteImagesByIds(user, cmDto.deletefilesIds);
-      }
-
       if (documents) {
-        [uploadedImages] = await Promise.all([
-          documents?.length
-            ? this.fileUploadService.multiFileUpload(
-                documents,
-                'contract-management',
-                true,
-                token,
-                cm.contact_user.branch.company?.id,
-              )
-            : [],
-        ]);
+        uploadedImages = await this.fileUploadService.multiFileUpload(
+          documents,
+          'contract-management',
+          true,
+          token,
+          user.branch.company.id,
+        );
       }
 
       // Helper function to prepare upload data
       const prepareUploadData = (
-        files: (ContractManagementDocumentDto | Express.Multer.File)[]
+        files: (ContractManagementDocumentDto | Express.Multer.File)[],
       ): ContractManagementDocumentDto[] =>
         files?.map((file: any) => ({
           fileName: file.fileName || file.originalname || '',
           filePath: file.filePath || file.key || '',
           fileType: file.fileType || file.mimetype || '',
-          uploadedBy: cm.contact_user,
+          uploadedBy: user,
           updatedAt: dateToUTC(),
           createdAt: dateToUTC(),
           contractManagement: cm,
-          isActive: typeof file.isActive === 'boolean' ? file.isActive : true,
-          message: file.message || '',
+          isActive: typeof file?.isActive === 'boolean' ? file.isActive : true,
         })) || [];
 
-      if (uploadedImages.length || cmDto.existingFiles?.length) {
-        const uploadImages =[];
-        if(uploadImages.length){
-          uploadImages.push(
-            ...prepareUploadData(uploadedImages),
-          );
+      if (uploadedImages.length || cmDto.importedFiles?.length) {
+        const uploadImages = [];
+        if (uploadImages.length) {
+          uploadImages.push(...prepareUploadData(uploadedImages));
         }
-        if(cmDto.existingFiles?.length){
-          uploadImages.push(
-            ...prepareUploadData(cmDto.existingFiles),
-          );
+        if (cmDto.importedFiles?.length) {
+          uploadImages.push(...prepareUploadData(cmDto.importedFiles));
         }
         const promises: any = [this.insertManyImages(uploadImages)];
-        console.log('uploadImages', uploadImages);
         await Promise.all(promises);
       }
     } catch (error) {
@@ -120,7 +98,7 @@ export class ContractManagementDocumentService {
     cmDto: UpdateContractManagementDto,
     cm: ContractManagement,
   ) {
-    const value= await this.cmDocumentsQueue.add('uploadFilesAndImagesForCM', {
+    const value = await this.cmDocumentsQueue.add('uploadFilesAndImagesForCM', {
       documents,
       user,
       token,
