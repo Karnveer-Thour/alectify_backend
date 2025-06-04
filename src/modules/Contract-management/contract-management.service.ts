@@ -201,11 +201,12 @@ export class ContractManagementService {
         newContractManagement,
       );
 
-      await this.ContractManagementDocumentService.uploadImagesForCMQueue(
+     const value= await this.ContractManagementDocumentService.uploadImagesForCMQueue(
         files,
         user,
         token,
         { ...contractManagementData },
+        contractManagement,
       );
 
       return {

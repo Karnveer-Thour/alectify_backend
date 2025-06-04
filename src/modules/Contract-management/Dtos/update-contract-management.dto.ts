@@ -32,4 +32,5 @@ export class UpdateContractManagementDto {
   @IsArray()
   @IsOptional()
   deletefilesIds?: string[];
+  contractManagement: any;
 }

@@ -11,11 +11,15 @@ import { ProjectsModule } from 'modules/projects/projects.module';
 import { UsersRepository } from 'modules/users/repositories/users.repository';
 import { ContractManagementDocumentService } from './contract-management-document.service';
 import { BullModule } from '@nestjs/bull';
+import { contractManagementDocumentsConsumer } from './consumers/contract-management-documents.consumer';
 
 @Module({
   imports: [
     BullModule.registerQueue({
       name: 'contractManagementDocuments',
+      defaultJobOptions: {
+          removeOnComplete: true,
+        },
     }),
     OrganizationsModule,
     UsersModule,
@@ -26,10 +30,11 @@ import { BullModule } from '@nestjs/bull';
   providers: [
     ContractManagementService,
     ContractManagementDocumentService,
-    ContractManagementRepository,
     ContractManagementDocumentRepository,
+    ContractManagementRepository,
     ProjectsRepository,
     UsersRepository,
+    contractManagementDocumentsConsumer,
   ],
 })
 export class ContractManagementModule {}

@@ -1,14 +1,15 @@
 import {
   OnQueueActive,
   OnQueueCompleted,
+  OnQueueFailed,
   Process,
   Processor,
 } from '@nestjs/bull';
 import { Job } from 'bull';
 import { ContractManagementDocumentService } from '../contract-management-document.service';
 
-@Processor('masterPreventiveMaintenanceDocuments')
-export class MasterPreventiveMaintenanceDocumentsConsumer {
+@Processor('contractManagementDocuments')
+export class contractManagementDocumentsConsumer {
   constructor(
     private ContractManagementDocumentService: ContractManagementDocumentService,
   ) {}
@@ -17,27 +18,23 @@ export class MasterPreventiveMaintenanceDocumentsConsumer {
   async uploadFilesAndImagesForPM(job: Job) {
     try {
       if (job.data.documents) {
-        if (job.data.documents['images']?.length) {
-          job.data.documents['images'] = job.data.documents['images'].map(
+        if (job.data.documents?.length) {
+          job.data.documents = job.data.documents.map(
             (img) => ({ ...img, buffer: Buffer.from(img.buffer) }),
-          );
-        }
-        if (job.data.documents['files']?.length) {
-          job.data.documents['files'] = job.data.documents['files'].map(
-            (file) => ({ ...file, buffer: Buffer.from(file.buffer) }),
           );
         }
       }
 
       // creating createOneYearCMs
-      await this.ContractManagementDocumentService.uploadImagesForCM(
+      return await this.ContractManagementDocumentService.uploadImagesForCM(
         job.data.documents,
         job.data.user,
         job.data.token,
         job.data.cmDto,
+        job.data.cm,
       );
     } catch (error) {
-      console.log('error when creating createOneYearCMs: ', error);
+      console.log('error when uploading CMs documents: ', error);
     }
     return { done: true };
   }
@@ -51,4 +48,9 @@ export class MasterPreventiveMaintenanceDocumentsConsumer {
   onCompleted(job: Job<unknown>) {
     console.log(`Job ${job.id}: ${job.name} has been finished`);
   }
+
+  @OnQueueFailed()
+onFailed(job: Job, err: Error) {
+  console.error(`Job ${job.id} failed: ${err.message}`);
+}
 }
