@@ -166,7 +166,7 @@ export class ContractManagementService {
       const contractManagement =
         await this.contractManagementRepository.findOne({
           where: { id: id },
-          relations: ['contact_user', 'project', 'organization'],
+          relations: ['contact_user','contact_user.branch.company', 'project', 'organization'],
         });
       const isAutheticated =
         await this.projectsService.findMasterProjectByUserIdAndProjectId(
