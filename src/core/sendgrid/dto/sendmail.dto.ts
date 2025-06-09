@@ -28,6 +28,11 @@ export class SendMailDto {
 
   @ApiProperty()
   @IsOptional()
+  @IsString()
+  ticketId?: string;
+
+  @ApiProperty()
+  @IsOptional()
   @IsArray()
   attachments?: {
     filename: string;

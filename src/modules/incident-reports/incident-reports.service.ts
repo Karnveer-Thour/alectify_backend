@@ -291,7 +291,7 @@ export class IncidentReportsService {
 
         const emailPayload: SendMailDto = {
           to: uniqueEmails,
-          subject: `${incidentReport.title} (Ticket #: ${incidentReport.id})`,
+          subject: `${incidentReport.title}`,
           text: `
         ${incidentSummaryHtmlEmail}
         <h3 style="color: #0954f1">Incident Description</h3>
@@ -315,6 +315,7 @@ export class IncidentReportsService {
         ---------------------------------------------------------------------------------------
         <p>This is an Automated email. You can Reply to this email and it will be automatically entered into the system.</p>
       `,
+          ticketId: incidentReport.id,
           attachments: emailAttachments,
         };
         await this.sendGridService.sendMailTest(emailPayload, true);

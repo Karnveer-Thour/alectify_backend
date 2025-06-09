@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { SendMailDto } from './dto/sendmail.dto';
 import { SendConfigType, SendGridConfig } from './sendgrid-mailer.config';
 import { sendGrid } from './sendgrid.config';
+import { custom } from 'joi';
 
 // TODO: For some unknkown reason if mailer service implements MailerFactoryInterface nest js initialization hangs up.
 @Injectable()
@@ -91,6 +92,9 @@ export class SendGridService {
           cc: ccEmails.length ? ccEmails : undefined,
           bcc: bccEmails.length ? bccEmails : undefined,
           subject: payload.subject,
+          custom_args: {
+            ticketId: payload.ticketId || '',
+          },
         },
       ],
       from: {
