@@ -34,6 +34,9 @@ export class SendGridService {
           cc: ccEmails.length ? ccEmails : undefined,
           bcc: bccEmails.length ? bccEmails : undefined,
           subject: payload.subject,
+          custom_args: {
+            ticketId: payload.ticketId || '',
+          },
         },
       ],
       from: {
